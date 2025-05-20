@@ -13,7 +13,6 @@ npm-debug.log
 .env.production.local
 
 # IDE files
-.vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace

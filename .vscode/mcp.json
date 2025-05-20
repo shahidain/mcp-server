@@ -1,0 +1,12 @@
+{
+  "servers": [
+    {
+      "type": "stdio",
+      "name": "Sample MCP Server",
+      "command": "node",
+      "args": ["${workspaceFolder}/dist/index.js"],
+      "workingDir": "${workspaceFolder}",
+      "preLaunchTask": "Build MCP Server"
+    }
+  ]
+}
