@@ -50,13 +50,12 @@ export class ProductService {
     const response = await axios.get<ProductsResponse>(url);
     return response.data;
   }
-
   /**
    * Get all product categories
    */
-  static async getCategories(): Promise<string[]> {
+  static async getCategories(): Promise<any[]> {
     const url = `${API_BASE_URL}/products/categories`;
-    const response = await axios.get<string[]>(url);
+    const response = await axios.get<any[]>(url);
     return response.data;
   }
 }

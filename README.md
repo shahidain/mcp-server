@@ -36,6 +36,66 @@ This MCP server provides the following tools:
 - `search-users` - Search for users by keyword
 - `get-categories` - Get a list of all product categories
 
+## SQL Database Integration
+
+This MCP server now includes SQL Server integration for storing and retrieving product and user data directly from a SQL database.
+
+### Database Setup
+
+1. Make sure you have SQL Server installed and running
+2. Configure your database connection in the `.env` file:
+   ```
+   MSSQL_CONNECTION_STRING=Server=yourserver;Database=yourdatabase;User Id=username;Password=password;Encrypt=false;TrustServerCertificate=true;
+   ```
+   Alternatively, you can set individual connection parameters:
+   ```
+   MSSQL_USER=username
+   MSSQL_PASSWORD=password
+   MSSQL_HOST=yourserver
+   MSSQL_DATABASE=yourdatabase
+   ```
+
+3. Create the necessary database tables and insert sample data using the SQL script:
+   ```bash
+   # Using SQL Server Management Studio or sqlcmd
+   # Execute the script at src/db/setup-database.sql
+   ```
+
+### SQL Tools Provided
+
+#### Product Tools
+- `sql-get-all-products` - Get all products from the SQL database
+- `sql-get-product-by-id` - Get a specific product by ID
+- `sql-search-products` - Search for products by name or description
+- `sql-get-products-below-price` - Get products below a specified price
+- `sql-get-low-inventory-products` - Get products with inventory below a threshold
+- `sql-get-paginated-products` - Get paginated products with specified page and size
+- `sql-add-product` - Add a new product to the database
+- `sql-update-product` - Update an existing product
+- `sql-delete-product` - Delete a product from the database
+
+#### User Tools
+- `sql-get-all-users` - Get all users from the SQL database
+- `sql-get-user-by-id` - Get a specific user by ID
+- `sql-search-users` - Search for users by username or email
+- `sql-get-user-by-email` - Get a specific user by email address
+- `sql-get-paginated-users` - Get paginated users with specified page and size
+- `sql-add-user` - Add a new user to the database
+- `sql-update-user` - Update an existing user
+- `sql-delete-user` - Delete a user from the database
+
+#### Database Tools
+- `sql-check-database-health` - Check the health of the SQL database connection
+
+### Testing the Database Connection
+
+You can test your database connection by running:
+
+```bash
+npm run build
+node dist/tools/testConnection.js
+```
+
 ## VS Code Integration
 
 ### Running the Server

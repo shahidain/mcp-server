@@ -136,7 +136,8 @@ export function registerProductTools(server: McpServer) {
         const results = await ProductService.getProductsByCategory(category);
         return {
           content: [
-            {              type: 'text',
+            {              
+              type: 'text',
               text: `Found ${results.products.length} products in category '${category}':\n\n` +
                 results.products.map(product => 
                   `ID: ${product.id}\nTitle: ${product.title}\nPrice: $${product.price}\nRating: ${product.rating}\nDescription: ${product.description}\nTags: ${product.tags ? product.tags.join(', ') : 'N/A'}\n`
@@ -154,8 +155,8 @@ export function registerProductTools(server: McpServer) {
           ]
         };
       }
-    }
-  );
+    }  );
+  
   // Get all categories
   server.tool(
     'get-categories',
@@ -164,11 +165,26 @@ export function registerProductTools(server: McpServer) {
     async () => {
       try {
         const categories = await ProductService.getCategories();
-        return {
+          // Format categories similar to products
+        const formattedCategories = categories.map(category => {
+          // Extract name/value from category based on its type
+          const categoryName = typeof category === 'string' 
+            ? category 
+            : category && typeof category === 'object'
+              ? (category.name || category.value || JSON.stringify(category))
+              : String(category);
+              
+          return `${categoryName}\n`
+            + (typeof category === 'object' && category.id ? `ID: ${category.id}\n` : '')
+            + (typeof category === 'object' && category.description ? `Description: ${category.description}\n` : '');
+        });
+        
+        return {          
           content: [
             {
               type: 'text',
-              text: `Available product categories:\n\n${categories.join('\n')}`
+              text: `Available product categories:\n\n` +
+                formattedCategories.join('\n')
             }
           ]
         };
