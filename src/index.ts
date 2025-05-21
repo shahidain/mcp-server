@@ -7,6 +7,7 @@ import { registerUserTools } from './controllers/userController.js';
 import { registerCommodityTools } from './controllers/commodityController.js';
 import { registerRoleTools } from './controllers/roleController.js';
 import { registerCurrencyTools } from './controllers/currencyController.js';
+import { registerVendorTools } from './controllers/vendorController.js';
 
 /**
  * Main function to set up and run the MCP server
@@ -40,6 +41,9 @@ async function main() {
 
     // Register all currency-related tools
     registerCurrencyTools(server);
+
+    // Register all vendor-related tools
+    registerVendorTools(server);
 
     console.error('Setting up transport...');
     
