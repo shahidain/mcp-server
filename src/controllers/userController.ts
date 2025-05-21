@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { UserService } from '../services/userService.js';
+import { SqlUserService } from '../services/sqlUserService.js';
+import type { User } from '../db-models/user.js';
 
-// Define TextContent interface for our responses
 interface TextContent {
   type: 'text';
   text: string;
@@ -10,7 +10,9 @@ interface TextContent {
 }
 
 export function registerUserTools(server: McpServer) {
-  // Get all users
+  const userService = new SqlUserService();
+
+  // Get all users with pagination
   server.tool(
     'get-users',
     'Get a list of users with optional pagination',
@@ -20,56 +22,15 @@ export function registerUserTools(server: McpServer) {
     },
     async ({ limit, skip }) => {
       try {
-        const users = await UserService.getUsers(limit, skip);
+        const users = await userService.getPaginatedUsers(skip || 0, limit || 10);
         return {
           content: [
             {
               type: 'text',
-              text: `Found ${users.users.length} users (out of ${users.total}):\n\n` +
-                users.users.map(user => 
-                  `ID: ${user.id}
-                    Name: ${user.firstName} ${user.lastName} ${user.maidenName ? `(née ${user.maidenName})` : ''}
-                    Age: ${user.age}
-                    Gender: ${user.gender}
-                    Email: ${user.email}
-                    Phone: ${user.phone}
-                    Username: ${user.username}
-                    Birth Date: ${user.birthDate}
-                    Blood Group: ${user.bloodGroup}
-                    Height: ${user.height} cm
-                    Weight: ${user.weight} kg
-                    Eye Color: ${user.eyeColor}
-                    Hair: ${user.hair?.color || 'N/A'}, ${user.hair?.type || 'N/A'}
-                    IP: ${user.ip}
-                    MAC Address: ${user.macAddress}
-                    University: ${user.university}
-                    EIN: ${user.ein}
-                    SSN: ${user.ssn}
-                    User Agent: ${user.userAgent}
-                    Role: ${user.role}
-
-                    Address:
-                    ${user.address?.address || 'N/A'}
-                    ${user.address?.city || 'N/A'}, ${user.address?.state || 'N/A'} ${user.address?.postalCode || 'N/A'}
-                    ${user.address?.country || 'N/A'}
-                    Coordinates: ${user.address?.coordinates?.lat || 'N/A'}, ${user.address?.coordinates?.lng || 'N/A'}
-
-                    Company:
-                    Name: ${user.company?.name || 'N/A'}
-                    Department: ${user.company?.department || 'N/A'}
-                    Title: ${user.company?.title || 'N/A'}
-
-                    Bank:
-                    Card Type: ${user.bank?.cardType || 'N/A'}
-                    Card Number: ${user.bank?.cardNumber || 'N/A'}
-                    Expires: ${user.bank?.cardExpire || 'N/A'}
-                    Currency: ${user.bank?.currency || 'N/A'}
-
-                    Crypto:
-                    Currency: ${user.crypto?.coin || 'N/A'}
-                    Wallet: ${user.crypto?.wallet || 'N/A'}
-                    Network: ${user.crypto?.network || 'N/A'}`
-                ).join('\n\n---\n\n')
+              text: `Found ${users.length} users:\n\n` +
+                users.map(user => 
+                  `ID: ${user.Id}\nName: ${user.Name}\nEmail: ${user.Email}\nUsername: ${user.Username}\nRole ID: ${user.RoleId}\nBlocked: ${user.Blocked ? 'Yes' : 'No'}\nLast Login: ${user.LastLogin ? new Date(user.LastLogin).toLocaleString() : 'N/A'}\nCurrent Login: ${user.CurrentLogin ? new Date(user.CurrentLogin).toLocaleString() : 'N/A'}\n`
+                ).join('\n---\n')
             }
           ]
         };
@@ -89,62 +50,40 @@ export function registerUserTools(server: McpServer) {
   // Get user by ID
   server.tool(
     'get-user-by-id',
-    'Get detailed information about a specific user by their ID',
+    'Get detailed information about a specific user by its ID',
     {
       id: z.number().min(1).describe('The user ID to fetch')
     },
     async ({ id }) => {
       try {
-        const user = await UserService.getUserById(id);
-        
+        const user = await userService.getUserById(id);
+
+        if (!user) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `No user found with ID: ${id}`
+              }
+            ]
+          };
+        }
+
         const content: TextContent = {
           type: 'text',
-          text: `User Details:
-          ID: ${user.id}
-          Name: ${user.firstName} ${user.lastName} ${user.maidenName ? `(née ${user.maidenName})` : ''}
-          Email: ${user.email}
-          Username: ${user.username}
-          Age: ${user.age}
-          Gender: ${user.gender}
-          Birth Date: ${user.birthDate}
-          Blood Group: ${user.bloodGroup}
-          Height: ${user.height} cm
-          Weight: ${user.weight} kg
-          Eye Color: ${user.eyeColor}
-          Hair: ${user.hair.color}, ${user.hair.type}
-          Phone: ${user.phone}
-          
-          Address:
-          ${user.address.address}
-          ${user.address.city}, ${user.address.state} ${user.address.postalCode}
-          ${user.address.country}
-          Coordinates: ${user.address.coordinates.lat}, ${user.address.coordinates.lng}
-          
-          Employment:
-          Company: ${user.company.name}
-          Department: ${user.company.department}
-          Title: ${user.company.title}
-          
-          Bank Information:
-          Card: ${user.bank.cardType}
-          Number: ${user.bank.cardNumber}
-          Expires: ${user.bank.cardExpire}
-          Currency: ${user.bank.currency}
-          
-          Other:
-          University: ${user.university}
-          EIN: ${user.ein}
-          SSN: ${user.ssn}
-          IP Address: ${user.ip}
-          MAC Address: ${user.macAddress}
-          
-          Crypto:
-          Currency: ${user.crypto.coin}
-          Wallet: ${user.crypto.wallet}
-          Network: ${user.crypto.network}
-          
-          Role: ${user.role}
-          `
+          text: `User Details:\n` +
+            `ID: ${user.Id}\n` +
+            `Name: ${user.Name}\n` +
+            `Email: ${user.Email}\n` +
+            `Username: ${user.Username}\n` +
+            `Role ID: ${user.RoleId}\n` +
+            `Blocked: ${user.Blocked ? 'Yes' : 'No'}\n` +
+            `Last Login: ${user.LastLogin ? new Date(user.LastLogin).toLocaleString() : 'N/A'}\n` +
+            `Current Login: ${user.CurrentLogin ? new Date(user.CurrentLogin).toLocaleString() : 'N/A'}\n` +
+            `Created On: ${user.CreatedOn ? new Date(user.CreatedOn).toLocaleString() : 'N/A'}\n` +
+            `Created By: ${user.CreatedBy}\n` +
+            `Modified On: ${user.ModifiedOn ? new Date(user.ModifiedOn).toLocaleString() : 'N/A'}\n` +
+            `Modified By: ${user.ModifiedBy}`
         };
 
         return { content: [content] };
@@ -170,9 +109,9 @@ export function registerUserTools(server: McpServer) {
     },
     async ({ query }) => {
       try {
-        const results = await UserService.searchUsers(query);
-        
-        if (results.users.length === 0) {
+        const users = await userService.searchUsers(query);
+
+        if (users.length === 0) {
           return {
             content: [
               {
@@ -182,14 +121,14 @@ export function registerUserTools(server: McpServer) {
             ]
           };
         }
-        
+
         return {
           content: [
             {
               type: 'text',
-              text: `Found ${results.users.length} users matching '${query}':\n\n` +
-                results.users.map(user => 
-                  `ID: ${user.id}\nName: ${user.firstName} ${user.lastName}\nEmail: ${user.email}\nUsername: ${user.username}\nRole: ${user.role}\n`
+              text: `Found ${users.length} users matching '${query}':\n\n` +
+                users.map(user => 
+                  `ID: ${user.Id}\nName: ${user.Name}\nEmail: ${user.Email}\nUsername: ${user.Username}\nRole ID: ${user.RoleId}\nBlocked: ${user.Blocked ? 'Yes' : 'No'}\n`
                 ).join('\n---\n')
             }
           ]
