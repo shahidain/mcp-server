@@ -5,6 +5,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { registerProductTools } from './controllers/productController.js';
 import { registerUserTools } from './controllers/userController.js';
 import { registerCommodityTools } from './controllers/commodityController.js';
+import { registerRoleTools } from './controllers/roleController.js';
 
 /**
  * Main function to set up and run the MCP server
@@ -32,6 +33,9 @@ async function main() {
 
     // Register all commodity-related tools
     registerCommodityTools(server);
+
+    // Register all role-related tools
+    registerRoleTools(server);
 
     console.error('Setting up transport...');
     
