@@ -12,7 +12,8 @@ export class SqlUserService {
             request.input('limit', sql.Int, limit);
 
             const result = await request.query(
-                `SELECT * FROM Users WHERE Deleted = 0 ORDER BY Id OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY`
+                `SELECT U.*, R.Name As RoleName FROM Users U
+                INNER JOIN Roles R ON R.Id = U.RoleId OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY`
             );
 
             return result.recordset;
@@ -30,7 +31,8 @@ export class SqlUserService {
             request.input('id', sql.Int, id);
 
             const result = await request.query(
-                `SELECT * FROM Users WHERE Id = @id AND Deleted = 0`
+                `SELECT U.*, R.Name AS RoleName FROM Users U 
+                INNER JOIN Roles R ON R.Id = U.RoleId WHERE U.Id = @id`
             );
 
             return result.recordset[0] || null;
@@ -48,11 +50,12 @@ export class SqlUserService {
             request.input('query', sql.VarChar, `%${query}%`);
 
             const result = await request.query(
-                `SELECT * FROM Users 
-                 WHERE Deleted = 0 
-                 AND (Name LIKE @query 
-                      OR Email LIKE @query 
-                      OR Username LIKE @query)`
+                `SELECT U.*, R.Name AS RoleName FROM Users U
+                  INNER JOIN Roles R ON U.RoleId = R.Id
+                  WHERE 1 = 1
+                 AND (U.Name LIKE @query 
+                      OR U.Email LIKE @query 
+                      OR U.Username LIKE @query)`
             );
 
             return result.recordset;

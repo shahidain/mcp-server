@@ -27,10 +27,7 @@ export function registerUserTools(server: McpServer) {
           content: [
             {
               type: 'text',
-              text: `Found ${users.length} users:\n\n` +
-                users.map(user => 
-                  `ID: ${user.Id}\nName: ${user.Name}\nEmail: ${user.Email}\nUsername: ${user.Username}\nRole ID: ${user.RoleId}\nBlocked: ${user.Blocked ? 'Yes' : 'No'}\nLast Login: ${user.LastLogin ? new Date(user.LastLogin).toLocaleString() : 'N/A'}\nCurrent Login: ${user.CurrentLogin ? new Date(user.CurrentLogin).toLocaleString() : 'N/A'}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(users, null, 2)
             }
           ]
         };
@@ -126,10 +123,7 @@ export function registerUserTools(server: McpServer) {
           content: [
             {
               type: 'text',
-              text: `Found ${users.length} users matching '${query}':\n\n` +
-                users.map(user => 
-                  `ID: ${user.Id}\nName: ${user.Name}\nEmail: ${user.Email}\nUsername: ${user.Username}\nRole ID: ${user.RoleId}\nBlocked: ${user.Blocked ? 'Yes' : 'No'}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(users, null, 2)
             }
           ]
         };

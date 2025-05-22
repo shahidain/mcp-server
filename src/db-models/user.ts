@@ -14,4 +14,5 @@ export interface User {
   DigitalSignature: string;
   LastLogin: Date;
   CurrentLogin: Date;
+  RoleName: string | null;
 }
