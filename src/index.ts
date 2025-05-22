@@ -13,8 +13,9 @@ import { registerVendorTools } from './controllers/vendorController.js';
  * Main function to set up and run the MCP server
  */
 async function main() {
-  try {    console.error('Initializing Sample MCP Server...');
+  try {    
     
+    console.log('Initializing Sample MCP Server...');
     // Create the MCP Server instance
     const server = new McpServer({
       name: 'sample-mcp-server',
@@ -25,7 +26,7 @@ async function main() {
       },
     });
     
-    console.error('Registering product and user tools...');
+    console.log('Registering product and user tools...');
     
     // Register all product-related tools
     registerProductTools(server);
@@ -45,17 +46,17 @@ async function main() {
     // Register all vendor-related tools
     registerVendorTools(server);
 
-    console.error('Setting up transport...');
+    console.log('Setting up transport...');
     
     // Set up the transport for server communication (stdio)
     const transport = new StdioServerTransport();
     
-    console.error('Connecting server to transport...');
+    console.log('Connecting server to transport...');
     
     // Connect the server to the transport
     await server.connect(transport);
     
-    console.error('Sample MCP Server running on stdio');
+    console.log('Sample MCP Server running on stdio');
   } catch (error) {
     console.error('Error during MCP server initialization:', error);
     process.exit(1);

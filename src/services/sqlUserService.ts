@@ -13,7 +13,7 @@ export class SqlUserService {
 
             const result = await request.query(
                 `SELECT U.*, R.Name As RoleName FROM Users U
-                INNER JOIN Roles R ON R.Id = U.RoleId OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY`
+                INNER JOIN Roles R ON R.Id = U.RoleId ORDER BY U.Id OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY`
             );
 
             return result.recordset;
