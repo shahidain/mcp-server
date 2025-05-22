@@ -24,7 +24,16 @@ export function registerProductTools(server: McpServer) {
               type: 'text',
               text: `Found ${products.products.length} products (out of ${products.total}):\n\n` +
                 products.products.map(product => 
-                  `ID: ${product.id}\nTitle: ${product.title}\nPrice: $${product.price}\nCategory: ${product.category}\nRating: ${product.rating}\nDescription: ${product.description}\nTags: ${product.tags ? product.tags.join(', ') : 'N/A'}\n`
+                  `ID: ${product.id}\n
+                  Title: ${product.title}\n
+                  Price: $${product.price}\n
+                  Category: ${product.category}\n
+                  Brand: ${product.brand}\n
+                  Rating: ${product.rating}\n
+                  Description: ${product.description}\n
+                  Stock: ${product.stock}\n
+                  Thumbnail: ${product.thumbnail}\n
+                  Tags: ${product.tags ? product.tags.join(', ') : 'N/A'}\n`
                 ).join('\n---\n')
             }
           ]
