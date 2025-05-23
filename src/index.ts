@@ -49,8 +49,11 @@ async function main() {
     registerVendorTools(server);
 
     const app = express();
+    app.use(express.json());
+    
     setupSSEEndpoint(app, server);
     setupMessageEndpoint(app);
+    
     app.listen(4000, () => {
       console.log(`MCP server is running on port 4000`);
     });
