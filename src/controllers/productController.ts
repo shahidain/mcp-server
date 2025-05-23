@@ -22,19 +22,7 @@ export function registerProductTools(server: McpServer) {
         return {
           content: [            {
               type: 'text',
-              text: `Found ${products.products.length} products (out of ${products.total}):\n\n` +
-                products.products.map(product => 
-                  `ID: ${product.id}\n
-                  Title: ${product.title}\n
-                  Price: $${product.price}\n
-                  Category: ${product.category}\n
-                  Brand: ${product.brand}\n
-                  Rating: ${product.rating}\n
-                  Description: ${product.description}\n
-                  Stock: ${product.stock}\n
-                  Thumbnail: ${product.thumbnail}\n
-                  Tags: ${product.tags ? product.tags.join(', ') : 'N/A'}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(products, null, 2)
             }
           ]
         };
@@ -62,19 +50,7 @@ export function registerProductTools(server: McpServer) {
         const product = await ProductService.getProductById(id); 
         const content: TextContent = {
           type: 'text',
-          text: `Product Details:
-            ID: ${product.id}
-            Title: ${product.title}
-            Description: ${product.description}
-            Price: $${product.price}
-            Discount: ${product.discountPercentage}%
-            Rating: ${product.rating}
-            Stock: ${product.stock}
-            Brand: ${product.brand}
-            Category: ${product.category}
-            Tags: ${product.tags ? product.tags.join(', ') : 'N/A'}
-            Thumbnail: ${product.thumbnail}
-            Images: ${product.images.join('\n')}`        
+          text: JSON.stringify(product, null, 2)      
         };
           return { content: [content] };      
         } catch (error) {
@@ -113,10 +89,7 @@ export function registerProductTools(server: McpServer) {
           content: [
             {              
               type: 'text',
-              text: `Found ${results.products.length} products matching '${query}':\n\n` +
-                results.products.map(product => 
-                  `ID: ${product.id}\nTitle: ${product.title}\nPrice: $${product.price}\nCategory: ${product.category}\nDescription: ${product.description}\nTags: ${product.tags ? product.tags.join(', ') : 'N/A'}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(results, null, 2)
             }
           ]
         };
@@ -147,10 +120,7 @@ export function registerProductTools(server: McpServer) {
           content: [
             {              
               type: 'text',
-              text: `Found ${results.products.length} products in category '${category}':\n\n` +
-                results.products.map(product => 
-                  `ID: ${product.id}\nTitle: ${product.title}\nPrice: $${product.price}\nRating: ${product.rating}\nDescription: ${product.description}\nTags: ${product.tags ? product.tags.join(', ') : 'N/A'}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(results, null, 2)
             }
           ]
         };
@@ -174,26 +144,12 @@ export function registerProductTools(server: McpServer) {
     async () => {
       try {
         const categories = await ProductService.getCategories();
-          // Format categories similar to products
-        const formattedCategories = categories.map(category => {
-          // Extract name/value from category based on its type
-          const categoryName = typeof category === 'string' 
-            ? category 
-            : category && typeof category === 'object'
-              ? (category.name || category.value || JSON.stringify(category))
-              : String(category);
-              
-          return `${categoryName}\n`
-            + (typeof category === 'object' && category.id ? `ID: ${category.id}\n` : '')
-            + (typeof category === 'object' && category.description ? `Description: ${category.description}\n` : '');
-        });
-        
+
         return {          
           content: [
             {
               type: 'text',
-              text: `Available product categories:\n\n` +
-                formattedCategories.join('\n')
+              text: JSON.stringify(categories, null, 2)
             }
           ]
         };

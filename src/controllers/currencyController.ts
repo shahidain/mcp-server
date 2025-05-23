@@ -72,12 +72,7 @@ export function registerCurrencyTools(server: McpServer) {
         
         const content: TextContent = {
           type: 'text',
-          text: `Currency Details:\n` +
-            `ID: ${currency.ID}\n` +
-            `Short Name: ${currency.SHORT_NAME}\n` +
-            `Name: ${currency.NAME}\n` +
-            `Created On: ${currency.CREATED_ON ? new Date(currency.CREATED_ON).toLocaleString() : 'N/A'}\n` +
-            `Created By: ${currency.CREATED_BY}\n`
+          text: JSON.stringify(currency, null, 2)
         };
         
         return { content: [content] };
@@ -104,29 +99,11 @@ export function registerCurrencyTools(server: McpServer) {
     async ({ query }) => {
       try {
         const currencies = await currencyService.searchCurrencies(query);
-        
-        if (currencies.length === 0) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `No currencies found matching '${query}'.`
-              }
-            ]
-          };
-        }
-        
-        // Create a markdown table for better presentation
-        const tableHeader = '| ID | Short Name | Name | Created On |\n|-----|------------|------|------------|\n';
-        const tableRows = currencies.map(currency => 
-          `| ${currency.ID} | ${currency.SHORT_NAME} | ${currency.NAME} | ${currency.CREATED_ON ? new Date(currency.CREATED_ON).toLocaleString() : 'N/A'} |`
-        ).join('\n');
-        
         return {
           content: [
             {              
               type: 'text',
-              text: `Found ${currencies.length} currencies matching '${query}':\n\n${tableHeader}${tableRows}`
+              text: JSON.stringify(currencies, null, 2)
             }
           ]
         };

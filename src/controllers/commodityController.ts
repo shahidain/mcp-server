@@ -28,10 +28,7 @@ export function registerCommodityTools(server: McpServer) {
           content: [
             {
               type: 'text',
-              text: `Found ${commodities.length} commodities:\n\n` +
-                commodities.map(commodity => 
-                  `ID: ${commodity.Id}\nCode: ${commodity.Code}\nName: ${commodity.Name}\nUnit: ${commodity.Unit}\nLotSize: ${commodity.LotSize}\nBank Code: ${commodity.BankCode}\nInternational: ${commodity.ISINTERNATIONAL ? 'Yes' : 'No'}\nShort Name: ${commodity.ShortName || 'N/A'}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(commodities, null, 2)
             }
           ]
         };
@@ -72,19 +69,7 @@ export function registerCommodityTools(server: McpServer) {
         
         const content: TextContent = {
           type: 'text',
-          text: `Commodity Details:\n` +
-            `ID: ${commodity.Id}\n` +
-            `Code: ${commodity.Code}\n` +
-            `Name: ${commodity.Name}\n` +
-            `Short Name: ${commodity.ShortName || 'N/A'}\n` +
-            `Unit: ${commodity.Unit}\n` +
-            `LotSize: ${commodity.LotSize}\n` +
-            `Bank Code: ${commodity.BankCode}\n` +
-            `International: ${commodity.ISINTERNATIONAL ? 'Yes' : 'No'}\n` +
-            `Created On: ${commodity.CreatedOn ? new Date(commodity.CreatedOn).toLocaleString() : 'N/A'}\n` +
-            `Created By: ${commodity.CreatedBy}\n` +
-            `Modified On: ${commodity.ModifiedOn ? new Date(commodity.ModifiedOn).toLocaleString() : 'N/A'}\n` +
-            `Modified By: ${commodity.ModifiedBy}`
+          text: JSON.stringify(commodity, null, 2)
         };
         
         return { content: [content] };
@@ -127,10 +112,7 @@ export function registerCommodityTools(server: McpServer) {
           content: [
             {              
               type: 'text',
-              text: `Found ${commodities.length} commodities matching '${query}':\n\n` +
-                commodities.map(commodity => 
-                  `ID: ${commodity.Id}\nCode: ${commodity.Code}\nName: ${commodity.Name}\nUnit: ${commodity.Unit}\nLotSize: ${commodity.LotSize}\nBank Code: ${commodity.BankCode}\nInternational: ${commodity.ISINTERNATIONAL ? 'Yes' : 'No'}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(commodities, null, 2)
             }
           ]
         };

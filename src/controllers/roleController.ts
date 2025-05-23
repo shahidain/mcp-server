@@ -27,10 +27,7 @@ export function registerRoleTools(server: McpServer) {
           content: [
             {
               type: 'text',
-              text: `Found ${roles.length} roles:\n\n` +
-              roles.map(role =>
-                `ID: ${role.Id}\nName: ${role.Name}\nDelete: ${role.Delete ? 'Yes' : 'No'}\n`
-              ).join('\n---\n')
+              text: JSON.stringify(roles, null, 2)
             }
           ]
         };
@@ -71,14 +68,7 @@ export function registerRoleTools(server: McpServer) {
         
         const content: TextContent = {
           type: 'text',
-          text: `Role Details:\n` +
-            `ID: ${role.Id}\n` +
-            `Name: ${role.Name}\n` +
-            `Delete: ${role.Delete ? 'Yes' : 'No'}\n` +
-            `Created On: ${role.CreatedOn ? new Date(role.CreatedOn).toLocaleString() : 'N/A'}\n` +
-            `Created By: ${role.CreatedBy || 'N/A'}\n` +
-            `Modified On: ${role.ModifiedOn ? new Date(role.ModifiedOn).toLocaleString() : 'N/A'}\n` +
-            `Modified By: ${role.ModifiedBy || 'N/A'}`
+          text: JSON.stringify(role, null, 2)
         };
         
         return { content: [content] };
@@ -105,28 +95,11 @@ export function registerRoleTools(server: McpServer) {
     async ({ query }) => {
       try {
         const roles = await roleService.searchRoles(query);
-          if (roles.length === 0) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `No roles found matching '${query}'.`
-              }
-            ]
-          };
-        }
-        
-        // Create a markdown table for better presentation
-        const tableHeader = '| ID | Name | Delete |\n|-----|---------------------|--------|\n';
-        const tableRows = roles.map(role => 
-          `| ${role.Id} | ${role.Name} | ${role.Delete ? 'Yes' : 'No'} |`
-        ).join('\n');
-        
         return {
           content: [
             {              
               type: 'text',
-              text: `Found ${roles.length} roles matching '${query}':\n\n${tableHeader}${tableRows}`
+              text: JSON.stringify(roles, null, 2)
             }
           ]
         };

@@ -68,19 +68,7 @@ export function registerUserTools(server: McpServer) {
 
         const content: TextContent = {
           type: 'text',
-          text: `User Details:\n` +
-            `ID: ${user.Id}\n` +
-            `Name: ${user.Name}\n` +
-            `Email: ${user.Email}\n` +
-            `Username: ${user.Username}\n` +
-            `Role ID: ${user.RoleId}\n` +
-            `Blocked: ${user.Blocked ? 'Yes' : 'No'}\n` +
-            `Last Login: ${user.LastLogin ? new Date(user.LastLogin).toLocaleString() : 'N/A'}\n` +
-            `Current Login: ${user.CurrentLogin ? new Date(user.CurrentLogin).toLocaleString() : 'N/A'}\n` +
-            `Created On: ${user.CreatedOn ? new Date(user.CreatedOn).toLocaleString() : 'N/A'}\n` +
-            `Created By: ${user.CreatedBy}\n` +
-            `Modified On: ${user.ModifiedOn ? new Date(user.ModifiedOn).toLocaleString() : 'N/A'}\n` +
-            `Modified By: ${user.ModifiedBy}`
+          text: JSON.stringify(user, null, 2)
         };
 
         return { content: [content] };
@@ -107,18 +95,6 @@ export function registerUserTools(server: McpServer) {
     async ({ query }) => {
       try {
         const users = await userService.searchUsers(query);
-
-        if (users.length === 0) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `No users found matching '${query}'.`
-              }
-            ]
-          };
-        }
-
         return {
           content: [
             {

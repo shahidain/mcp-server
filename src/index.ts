@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerProductTools } from './controllers/productController.js';
 import { registerUserTools } from './controllers/userController.js';
 import { registerCommodityTools } from './controllers/commodityController.js';
 import { registerRoleTools } from './controllers/roleController.js';
 import { registerCurrencyTools } from './controllers/currencyController.js';
 import { registerVendorTools } from './controllers/vendorController.js';
+import { setupSSEEndpoint, setupMessageEndpoint } from "./modules/transports.js";
+import dotenv from "dotenv";
+import express from "express";
 
 /**
  * Main function to set up and run the MCP server
  */
 async function main() {
-  try {    
-    
+  try {
     console.log('Initializing Sample MCP Server...');
+    dotenv.config();
     // Create the MCP Server instance
     const server = new McpServer({
       name: 'sample-mcp-server',
@@ -46,17 +48,13 @@ async function main() {
     // Register all vendor-related tools
     registerVendorTools(server);
 
-    console.log('Setting up transport...');
-    
-    // Set up the transport for server communication (stdio)
-    const transport = new StdioServerTransport();
-    
-    console.log('Connecting server to transport...');
-    
-    // Connect the server to the transport
-    await server.connect(transport);
-    
-    console.log('Sample MCP Server running on stdio');
+    const app = express();
+    setupSSEEndpoint(app, server);
+    setupMessageEndpoint(app);
+    app.listen(4000, () => {
+      console.log(`MCP server is running on port 4000`);
+    });
+
   } catch (error) {
     console.error('Error during MCP server initialization:', error);
     process.exit(1);

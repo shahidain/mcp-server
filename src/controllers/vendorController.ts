@@ -43,10 +43,7 @@ export function registerVendorTools(server: McpServer) {
           content: [
             {
               type: 'text',
-              text: `Found ${vendors.length} vendors:\n\n` +
-                vendorsWithCreators.map(vendor => 
-                  `ID: ${vendor.Id}\nName: ${vendor.Name}\nContact No: ${vendor.ContactNo || 'N/A'}\nEmail: ${vendor.Email || 'N/A'}\nBank Code: ${vendor.BankCode || 'N/A'}\nInternational: ${vendor.IsInternational ? 'Yes' : 'No'}\nCreated By: ${vendor.creatorName}\n`
-                ).join('\n---\n')
+              text: JSON.stringify(vendorsWithCreators, null, 2)
             }
           ]
         };
@@ -73,60 +70,9 @@ export function registerVendorTools(server: McpServer) {
     async ({ id }) => {
       try {
         const vendor = await vendorService.getVendorById(id);
-        
-        if (!vendor) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `No vendor found with ID: ${id}`
-              }
-            ]
-          };
-        }
-        
-        // Get creator name
-        let creatorName = 'Unknown';
-        if (vendor.CreatedBy) {
-          const creator = await userService.getUserById(vendor.CreatedBy);
-          if (creator) {
-            creatorName = creator.Name;
-          }
-        }
-        
-        // Get modifier name
-        let modifierName = 'Unknown';
-        if (vendor.ModifiedBy) {
-          const modifier = await userService.getUserById(vendor.ModifiedBy);
-          if (modifier) {
-            modifierName = modifier.Name;
-          }
-        }
-        
-        const formatDate = (date: Date | null) => {
-          if (!date) return 'N/A';
-          const d = new Date(date);
-          return `${d.getDate().toString().padStart(2, '0')}-${d.toLocaleString('default', { month: 'short' })}-${d.getFullYear()} ${d.toLocaleTimeString()}`;
-        };
-        
         const content: TextContent = {
           type: 'text',
-          text: `Vendor Details:\n` +
-            `Id: ${vendor.Id}\n` +
-            `Name: ${vendor.Name}\n` +
-            `Address: ${vendor.Address || 'N/A'}\n` +
-            `Contact No: ${vendor.ContactNo || 'N/A'}\n` +
-            `Type: ${vendor.Type || 'N/A'}\n` +
-            `Email: ${vendor.Email || 'N/A'}\n` +
-            `Account No: ${vendor.AccNo || 'N/A'}\n` +
-            `Bank Code: ${vendor.BankCode || 'N/A'}\n` +
-            `International: ${vendor.IsInternational ? 'Yes' : 'No'}\n` +
-            `Settlement Text: ${vendor.SettlementText || 'N/A'}\n` +
-            `Contract Date: ${formatDate(vendor.ContractDate)}\n` +
-            `Created By: ${creatorName} (ID: ${vendor.CreatedBy})\n` +
-            `Created On: ${formatDate(vendor.CreatedOn)}\n` +
-            `Modified By: ${modifierName} (ID: ${vendor.ModifiedBy})\n` +
-            `Modified On: ${formatDate(vendor.ModifiedOn)}`
+          text: JSON.stringify(vendor, null, 2)
         };
         
         return { content: [content] };
@@ -153,29 +99,11 @@ export function registerVendorTools(server: McpServer) {
     async ({ query }) => {
       try {
         const vendors = await vendorService.searchVendors(query);
-        
-        if (vendors.length === 0) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `No vendors found matching '${query}'.`
-              }
-            ]
-          };
-        }
-        
-        // Create a table format for better presentation
-        const tableHeader = '| Id | Name | Type | Contact No | Email | International | Bank Code |\n|---|------|------|------------|-------|---------------|----------|\n';
-        const tableRows = vendors.map(vendor => 
-          `| ${vendor.Id} | ${vendor.Name} | ${vendor.Type || 'N/A'} | ${vendor.ContactNo || 'N/A'} | ${vendor.Email || 'N/A'} | ${vendor.IsInternational ? 'Yes' : 'No'} | ${vendor.BankCode || 'N/A'} |`
-        ).join('\n');
-        
         return {
           content: [
             {              
               type: 'text',
-              text: `Found ${vendors.length} vendors matching '${query}':\n\n${tableHeader}${tableRows}`
+              text: JSON.stringify(vendors, null, 2)
             }
           ]
         };
