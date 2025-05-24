@@ -4,10 +4,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getToolToCall, getMarkdownTableFromJson } from "../llm-api/llmTools.js";
 import { SqlVendorService } from "../services/sqlVendorService.js";
 import { SqlUserService } from '../services/sqlUserService.js';
+import { SqlCommodityService } from "../services/sqlCommodityService.js";
+import { SqlRoleService } from "../services/sqlRoleService.js";
 
 const transports: { [sessionId: string]: SSEServerTransport } = {};
 const vendorService = new SqlVendorService();
 const userService = new SqlUserService();
+const commoditiesService = new SqlCommodityService();
+const roleService = new SqlRoleService();
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
   app.get("/sse", async (_: Request, res: Response) => {
@@ -43,33 +47,66 @@ export function setupMessageEndpoint(app: any) {
         if (req.body?.message) {
           try {
             const llmApiResponse: any = await getToolToCall(req.body.message);
-            let toolName = llmApiResponse?.tool;
-            console.log(`Tool to call: ${toolName}`);
+            const toolName = llmApiResponse?.tool;
+            console.log(`Tool to call with format: ${toolName} - ${JSON.stringify(llmApiResponse)}`);
+            const format = llmApiResponse?.format || "table";
+            const searchQuery: string | null | undefined = llmApiResponse?.parameters?.query;
+            const skip: number | undefined = llmApiResponse?.parameters?.skip;
+            const limit: number | undefined = llmApiResponse?.parameters?.limit;
+            const id = llmApiResponse?.parameters?.id;
             switch (toolName) {
               case "get-commodities":
-                console.log("Calling get-commodities tool");
-                break;
+                const commodities = await commoditiesService.getPaginatedCommodities();
+                const markDownCommodities = await getMarkdownTableFromJson(JSON.stringify(commodities), req.body.message);
+                return res.status(200).type('text/plain').send(markDownCommodities);
               case "get-commodity-by-id":
-                console.log("Calling get-commodity-by-id tool");
-                break;
+                const commoditiy = await commoditiesService.getCommodityById(id);
+                const markDownCommodity = await getMarkdownTableFromJson(JSON.stringify(commoditiy), req.body.message);
+                return res.status(200).type('text/plain').send(markDownCommodity);
+              case "search-commodities":
+                const searchCommodity = await commoditiesService.searchCommodities(searchQuery);
+                const markDownSearchCommodity = await getMarkdownTableFromJson(JSON.stringify(searchCommodity), req.body.message);
+                return res.status(200).type('text/plain').send(markDownSearchCommodity);
               case "get-roles":
-                console.log("Calling get-roles tool");
-                break;
+                const roles = await roleService.getPaginatedRoles(skip, limit);
+                const markDownRoles = await getMarkdownTableFromJson(JSON.stringify(roles), req.body.message);
+                return res.status(200).type('text/plain').send(markDownRoles);
               case "get-role-by-id":
-                console.log("Calling get-role-by-id tool");
-                break;
+                const role = await roleService.getRoleById(id);
+                const markDownRole = await getMarkdownTableFromJson(JSON.stringify(role), req.body.message);
+                return res.status(200).type('text/plain').send(markDownRole);
+              case "search-roles":
+                const searchRoles = await roleService.searchRoles(searchQuery);
+                const markDownSearchRoles = await getMarkdownTableFromJson(JSON.stringify(searchRoles), req.body.message);
+                return res.status(200).type('text/plain').send(markDownSearchRoles);
               case "get-users":
-                const users = await userService.getPaginatedUsers();
+                const users = await userService.getPaginatedUsers(skip, limit);
                 const markDownUsers = await getMarkdownTableFromJson(JSON.stringify(users), req.body.message);
                 return res.status(200).type('text/plain').send(markDownUsers);
+              case "get-user-by-id":
+                const user = await userService.getUserById(id);
+                const markDownUser = await getMarkdownTableFromJson(JSON.stringify(user), req.body.message);
+                return res.status(200).type('text/plain').send(markDownUser);
+              case "search-users":
+                const searchUsers = await userService.searchUsers(searchQuery);
+                const markDownSearchUsers = await getMarkdownTableFromJson(JSON.stringify(searchUsers), req.body.message);
+                return res.status(200).type('text/plain').send(markDownSearchUsers);
               case "get-vendors":
-                const vendors = await vendorService.getPaginatedVendors(0, 10);
+                const vendors = await vendorService.getPaginatedVendors(skip, limit);
                 const markDownVendors = await getMarkdownTableFromJson(JSON.stringify(vendors), req.body.message);
                 return res.status(200).type('text/plain').send(markDownVendors);
+              case "get-vendor-by-id":
+                const vendor = await vendorService.getVendorById(id);
+                const markDownVendor = await getMarkdownTableFromJson(JSON.stringify(vendor), req.body.message);
+                return res.status(200).type('text/plain').send(markDownVendor);
+              case "search-vendors":
+                const searchVendors = await vendorService.searchVendors(searchQuery);
+                const markDownSearchVendors = await getMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message);
+                return res.status(200).type('text/plain').send(markDownSearchVendors);
             }
             return res.status(200).json({
-              type: "tool_to_be_called",
-              response: llmApiResponse,
+              type: "error",
+              response: "I am trained to give info in requested format, but your request I could not process.",
               sessionId
             });
             
@@ -99,6 +136,6 @@ async function sendMessages(transport: SSEServerTransport) {
   await transport.send({
     jsonrpc: "2.0",
     method: "message",
-    params: { sessionId: transport.sessionId }
+    params: { sessionId: transport.sessionId, status: "connected" }
   })
 }

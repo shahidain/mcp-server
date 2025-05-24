@@ -98,14 +98,21 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
       5. get-user-by-id(id: number)
       6. get-roles(limit?: number, skip?: number)
       7. get-role-by-id(id: number)
+      8. get-commodities(skip?: number, limit?: number)
+      9. get-commodity-by-id(id: number)
+      10. search-commodities(query: string)
       
-      Based on the user message, return JSON with the most appropriate tool name and parameters.
+      Based on the user message, return JSON with the most appropriate tool name and parameters and requested format.
       Example output format:
       {
         "tool": "get-vendor-by-id",
         "parameters": {
-          "id": 42
-        }
+          "id": 42,
+          "query": "search term",
+          "limit": 10,
+          "skip": 0
+        },
+        "requested_format": "table"
       }
     `;
 
@@ -152,7 +159,7 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
 
 
 export async function getMarkdownTableFromJson(inputJson: string, userPrompt: string): Promise<string> {
-  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows.`;
+  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows. during conversion, for true use Yes and for false use No, treat same for boolean values. If the JSON is empty, return "No data available". null should be represented as blank string.`;
 
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
 

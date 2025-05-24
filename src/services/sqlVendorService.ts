@@ -40,7 +40,7 @@ export class SqlVendorService {
         }
     }
 
-    async searchVendors(query: string): Promise<Vendor[]> {
+    async searchVendors(query: string | null | undefined): Promise<Vendor[]> {
         try {
             const pool = await getPool();
             const request = new sql.Request(pool);

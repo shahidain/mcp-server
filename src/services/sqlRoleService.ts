@@ -41,7 +41,7 @@ export class SqlRoleService {    async getPaginatedRoles(skip = 0, limit = 10): 
             console.error('Error in getRoleById:', error);
             throw error;
         }
-    }    async searchRoles(query: string): Promise<Role[]> {
+    }    async searchRoles(query: string | null | undefined): Promise<Role[]> {
         try {
             const pool = await getPool();
             const request = new sql.Request(pool);

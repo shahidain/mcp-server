@@ -42,7 +42,7 @@ export class SqlUserService {
         }
     }
 
-    async searchUsers(query: string): Promise<User[]> {
+    async searchUsers(query: string | null | undefined): Promise<User[]> {
         try {
             const pool = await getPool();
             const request = new sql.Request(pool);

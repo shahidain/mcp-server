@@ -41,7 +41,7 @@ export class SqlCommodityService {
         }
     }
 
-    async searchCommodities(query: string): Promise<Commodity[]> {
+    async searchCommodities(query: string | null | undefined): Promise<Commodity[]> {
         try {
             const pool = await getPool();
             const request = new sql.Request(pool);
