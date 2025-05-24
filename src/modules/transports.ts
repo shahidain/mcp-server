@@ -15,24 +15,39 @@ const commoditiesService = new SqlCommodityService();
 const roleService = new SqlRoleService();
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
-  // Create an initial response endpoint that returns JSON right away
+  // Create an initial response endpoint that returns JSON right away with session ID
   app.get("/sse", (req: Request, res: Response) => {
-    // Return a regular JSON response that confirms the connection
+    // Create a transport to get a session ID even before streaming
+    const tempTransport = new SSEServerTransport("/messages", null as any);
+    const sessionId = tempTransport.sessionId;
+    
+    // Return a regular JSON response that confirms the connection with session ID
     return res.status(200).json({
       success: true,
       message: "SSE connection initialized. Connect to /sse/stream for real-time updates.",
-      streamEndpoint: "/sse/stream"
+      streamEndpoint: "/sse/stream",
+      sessionId: sessionId // Include the session ID in the initial response
     });
   });
-  
-  // Create a separate endpoint for the actual SSE connection
+    // Create a separate endpoint for the actual SSE connection
   app.get("/sse/stream", (req: Request, res: Response) => {
     try {
+      // Get sessionId from query parameter if provided (for reconnection)
+      const requestedSessionId = req.query.sessionId as string;
+      
       // Let SSEServerTransport handle all the headers and protocol
       const transport = new SSEServerTransport("/messages", res);
-      transports[transport.sessionId] = transport;
       
-      console.log(`SSE connection established. Session ID: ${transport.sessionId}`);
+      // Log session ID information
+      if (requestedSessionId) {
+        console.log(`Client requested reconnection with Session ID: ${requestedSessionId}`);
+        console.log(`New Session ID assigned: ${transport.sessionId}`);
+      } else {
+        console.log(`New SSE connection established. Session ID: ${transport.sessionId}`);
+      }
+      
+      // Store the transport with its session ID
+      transports[transport.sessionId] = transport;
       
       // Setup close handler
       res.on("close", () => {
@@ -156,15 +171,20 @@ export function setupMessageEndpoint(app: any) {
 
 async function sendMessages(transport: SSEServerTransport) {
   try {
-    // Send a connection confirmation message
+    // Send a connection confirmation message with session ID prominently featured
     await transport.send({
       jsonrpc: "2.0",
       method: "message",
       params: { 
-        sessionId: transport.sessionId, 
+        sessionId: transport.sessionId,
         status: "connected",
         type: "connection_response",
-        message: "Connection to MCP server established successfully"
+        message: "Connection to MCP server established successfully",
+        connectionDetails: {
+          sessionId: transport.sessionId,
+          connectedAt: new Date().toISOString(),
+          serverStatus: "ready"
+        }
       }
     });
     console.log(`Welcome message sent to client. Session ID: ${transport.sessionId}`);
