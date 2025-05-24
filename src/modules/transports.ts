@@ -1,3 +1,4 @@
+// filepath: c:\Users\Shahidain\Desktop\SAMPLE-MCP\src\modules\transports.ts
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { Request, Response } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -14,24 +15,45 @@ const commoditiesService = new SqlCommodityService();
 const roleService = new SqlRoleService();
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
-  app.get("/sse", async (_: Request, res: Response) => {
-    
-    const transport = new SSEServerTransport("/messages", res);
-    transports[transport.sessionId] = transport;
-
-    console.log(`SSE connection established. Session ID: ${transport.sessionId}`);
-
-    res.on("close", () => {
-      console.log(`SSE connection closed. Session ID: ${transport.sessionId}`);
-      delete transports[transport.sessionId];
+  // Create an initial response endpoint that returns JSON right away
+  app.get("/sse", (req: Request, res: Response) => {
+    // Return a regular JSON response that confirms the connection
+    return res.status(200).json({
+      success: true,
+      message: "SSE connection initialized. Connect to /sse/stream for real-time updates.",
+      streamEndpoint: "/sse/stream"
     });
-
+  });
+  
+  // Create a separate endpoint for the actual SSE connection
+  app.get("/sse/stream", (req: Request, res: Response) => {
     try {
-      await server.connect(transport);
-      await sendMessages(transport);
-      console.log(`Transport connected to MCP server. Session ID: ${transport.sessionId}`);
+      // Let SSEServerTransport handle all the headers and protocol
+      const transport = new SSEServerTransport("/messages", res);
+      transports[transport.sessionId] = transport;
+      
+      console.log(`SSE connection established. Session ID: ${transport.sessionId}`);
+      
+      // Setup close handler
+      res.on("close", () => {
+        console.log(`SSE connection closed. Session ID: ${transport.sessionId}`);
+        delete transports[transport.sessionId];
+      });
+      
+      // Connect to the server and handle errors with Promise chain
+      server.connect(transport)
+        .then(() => {
+          console.log(`Transport connected to MCP server. Session ID: ${transport.sessionId}`);
+          return sendMessages(transport);
+        })
+        .catch((error) => {
+          console.error(`Error connecting transport to MCP server. Session ID: ${transport.sessionId}`, error);
+        });
     } catch (error) {
-      console.error(`Error connecting transport to MCP server. Session ID: ${transport.sessionId}`, error);
+      console.error(`Error setting up SSE connection:`, error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to establish SSE connection" });
+      }
     }
   });
 }
@@ -133,9 +155,22 @@ export function setupMessageEndpoint(app: any) {
 }
 
 async function sendMessages(transport: SSEServerTransport) {
-  await transport.send({
-    jsonrpc: "2.0",
-    method: "message",
-    params: { sessionId: transport.sessionId, status: "connected" }
-  })
+  try {
+    // Send a connection confirmation message
+    await transport.send({
+      jsonrpc: "2.0",
+      method: "message",
+      params: { 
+        sessionId: transport.sessionId, 
+        status: "connected",
+        type: "connection_response",
+        message: "Connection to MCP server established successfully"
+      }
+    });
+    console.log(`Welcome message sent to client. Session ID: ${transport.sessionId}`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to send welcome message. Session ID: ${transport.sessionId}`, error);
+    return false;
+  }
 }
