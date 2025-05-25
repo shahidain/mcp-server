@@ -20,6 +20,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/express": "^5.0.2",
     "@types/mssql": "^9.1.7",
     "@types/node": "^22.15.19",
     "@types/vscode": "^1.100.0",
@@ -29,9 +30,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
+    "@types/cors": "^2.8.18",
     "axios": "^1.9.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "mssql": "^11.0.1",
+    "openai": "^4.103.0",
     "zod": "^3.24.4"
   }
 }

@@ -10,6 +10,7 @@ import { registerVendorTools } from './controllers/vendorController.js';
 import { setupSSEEndpoint, setupMessageEndpoint } from "./modules/transports.js";
 import dotenv from "dotenv";
 import express from "express";
+import cors from "cors";
 
 /**
  * Main function to set up and run the MCP server
@@ -40,15 +41,27 @@ async function main() {
     registerCommodityTools(server);
 
     // Register all role-related tools
-    registerRoleTools(server);
-
-    // Register all currency-related tools
+    registerRoleTools(server);    // Register all currency-related tools
     registerCurrencyTools(server);
 
     // Register all vendor-related tools
     registerVendorTools(server);
-
+    
     const app = express();
+    
+    // Configure CORS
+    const corsOptions = {
+      origin: '*', // Allow all origins
+      methods: ['GET', 'POST', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+      optionsSuccessStatus: 200
+    };
+    
+    // Apply CORS middleware globally
+    app.use(cors(corsOptions));
+    
+    // Parse JSON request bodies
     app.use(express.json());
     
     setupSSEEndpoint(app, server);

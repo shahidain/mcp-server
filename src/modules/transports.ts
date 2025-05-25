@@ -17,21 +17,22 @@ const roleService = new SqlRoleService();
 export function setupSSEEndpoint(app: any, server: McpServer) {
   // Create an initial response endpoint that returns JSON right away with session ID
   app.get("/sse", (req: Request, res: Response) => {
-    // Create a transport to get a session ID even before streaming
-    const tempTransport = new SSEServerTransport("/messages", null as any);
-    const sessionId = tempTransport.sessionId;
-    
+
     // Return a regular JSON response that confirms the connection with session ID
     return res.status(200).json({
       success: true,
-      message: "SSE connection initialized. Connect to /sse/stream for real-time updates.",
-      streamEndpoint: "/sse/stream",
-      sessionId: sessionId // Include the session ID in the initial response
+      message: "SSE connection initialized. Connect to /sse/stream for sessionid and real-time updates.",
+      streamEndpoint: "/sse/stream"
     });
   });
-    // Create a separate endpoint for the actual SSE connection
+  // Create a separate endpoint for the actual SSE connection
   app.get("/sse/stream", (req: Request, res: Response) => {
     try {
+      // Set SSE specific CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      
       // Get sessionId from query parameter if provided (for reconnection)
       const requestedSessionId = req.query.sessionId as string;
       
@@ -84,6 +85,7 @@ export function setupMessageEndpoint(app: any) {
         if (req.body?.message) {
           try {
             const llmApiResponse: any = await getToolToCall(req.body.message);
+            console.log(`LLM API Response: ${JSON.stringify(llmApiResponse)}`);
             const toolName = llmApiResponse?.tool;
             console.log(`Tool to call with format: ${toolName} - ${JSON.stringify(llmApiResponse)}`);
             const format = llmApiResponse?.format || "table";
@@ -141,19 +143,11 @@ export function setupMessageEndpoint(app: any) {
                 const markDownSearchVendors = await getMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message);
                 return res.status(200).type('text/plain').send(markDownSearchVendors);
             }
-            return res.status(200).json({
-              type: "error",
-              response: "I am trained to give info in requested format, but your request I could not process.",
-              sessionId
-            });
+            return res.status(200).type('text/plain').send(llmApiResponse);
             
           } catch (error) {
             console.error(`Error in calling tool for Session ID: ${sessionId}`, error);
-            return res.status(500).json({
-              type: "error",
-              message: `Error calling tool - ${error instanceof Error ? error.message : String(error)}`,
-              sessionId
-            });
+            res.status(200).type('text/plain').send(`Error calling LLM API - ${error instanceof Error ? error.message : String(error)}`);
           }
         } else {
           return await transport.handlePostMessage(req, res, req.body); 
