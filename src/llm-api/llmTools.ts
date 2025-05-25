@@ -130,7 +130,7 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
   try {
     // Define comprehensive tool schema for the AI to use
     const systemPrompt = `
-      You are an AI tool router. Available tools:
+      You are an AI tool router. Available tools are:
       1. get-vendors(limit?: number, skip?: number)
       2. get-vendor-by-id(id: number)
       3. search-vendors(query: string)
@@ -141,6 +141,7 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
       8. get-commodities(skip?: number, limit?: number)
       9. get-commodity-by-id(id: number)
       10. search-commodities(query: string)
+      11. get-products(skip?: number, limit?: number)
       
       Based on the user message, return JSON with the most appropriate tool name and parameters and requested format.
       Example output format:
@@ -235,7 +236,7 @@ export async function streamMarkdownTableFromJson(
   userPrompt: string, 
   res: Response
 ): Promise<void> {
-  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows. during conversion, for true use Yes and for false use No, treat same for boolean values. If the JSON is empty, return "No data available". null should be represented as blank string.`;
+  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows. during conversion, for true use Yes and for false use No, treat same for boolean values. If the JSON is empty, return "No data available". null value should be represented as blank string.`;
 
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
 
@@ -248,8 +249,11 @@ export async function streamMarkdownTableFromJson(
     }
     
     // Set appropriate headers for streaming text
-    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('connection', 'keep-alive');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.flushHeaders();
     
     // Create streaming response
     const stream = await openai.chat.completions.create({
@@ -275,6 +279,10 @@ export async function streamMarkdownTableFromJson(
     // End the response
     res.end();
     console.log('Streaming response completed');
+    res.on('close', () => {
+      console.log('Client closed connection during streaming');
+      res.end();
+    });
   } catch (error) {
     console.error('Error streaming response:', error);
     if (!res.headersSent) {

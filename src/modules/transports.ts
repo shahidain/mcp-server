@@ -6,6 +6,7 @@ import { SqlVendorService } from "../services/sqlVendorService.js";
 import { SqlUserService } from '../services/sqlUserService.js';
 import { SqlCommodityService } from "../services/sqlCommodityService.js";
 import { SqlRoleService } from "../services/sqlRoleService.js";
+import { ProductService } from "../services/productService.js";
 
 const transports: { [sessionId: string]: SSEServerTransport } = {};
 const vendorService = new SqlVendorService();
@@ -148,6 +149,10 @@ export function setupMessageEndpoint(app: any) {
               case "search-vendors":
                 const searchVendors = await vendorService.searchVendors(searchQuery);
                 return streamMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message, res);
+              
+                case "get-products":
+                const products = await ProductService.getProducts(limit, skip);
+                return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, res);
             }
             
             // Handle general responses by streaming the response as plain text
