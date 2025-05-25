@@ -1,5 +1,6 @@
 import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
+import { Response } from 'express';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -60,6 +61,45 @@ async function callWithRetry(config: any): Promise<any> {
   }
   
   throw lastError || new Error('Maximum retry attempts reached');
+}
+
+/**
+ * Makes a streaming API call to OpenAI
+ * @param config - OpenAI API call configuration
+ * @returns A stream of responses
+ * @throws Error if API call fails
+ */
+async function streamWithRetry(config: any): Promise<any> {
+  let lastError = null;
+  
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      // Set stream to true for streaming responses
+      const streamResponse = await openai.chat.completions.create({
+        ...config,
+        stream: true
+      });
+      
+      return streamResponse;
+    } catch (error) {
+      lastError = error;
+      const isRateLimitError = error instanceof Error && 
+        ('message' in error) && 
+        (error.message.includes('rate_limit') || error.message.includes('429'));
+      
+      // Only retry on rate limit or network errors
+      if (isRateLimitError || error instanceof TypeError || error instanceof SyntaxError) {
+        console.warn(`Streaming API call attempt ${attempt + 1} failed, retrying in ${RETRY_DELAY_MS}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+        continue;
+      }
+      
+      // Don't retry on other types of errors
+      throw error;
+    }
+  }
+  
+  throw lastError || new Error('Maximum retry attempts reached for streaming');
 }
 
 /**
@@ -158,6 +198,13 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
 }
 
 
+/**
+ * Generates a markdown table from JSON data, with streaming support
+ * @param inputJson - The JSON data to convert to markdown
+ * @param userPrompt - The user's prompt
+ * @param res - Express response object for streaming (optional)
+ * @returns Markdown table as string (if not streaming)
+ */
 export async function getMarkdownTableFromJson(inputJson: string, userPrompt: string): Promise<string> {
   const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows. during conversion, for true use Yes and for false use No, treat same for boolean values. If the JSON is empty, return "No data available". null should be represented as blank string.`;
 
@@ -175,4 +222,65 @@ export async function getMarkdownTableFromJson(inputJson: string, userPrompt: st
   const response = await callWithRetry(config);
   const content = response.choices[0]?.message?.content;
   return content;
+}
+
+/**
+ * Streams the markdown table conversion directly to the client
+ * @param inputJson - The JSON data to convert to markdown
+ * @param userPrompt - The user's prompt
+ * @param res - Express response object for streaming
+ */
+export async function streamMarkdownTableFromJson(
+  inputJson: string, 
+  userPrompt: string, 
+  res: Response
+): Promise<void> {
+  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows. during conversion, for true use Yes and for false use No, treat same for boolean values. If the JSON is empty, return "No data available". null should be represented as blank string.`;
+
+  const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
+
+  try {
+    // Validate API key
+    validateApiKey();
+    
+    if (!MODEL) {
+      throw new Error('OpenAI model is not configured');
+    }
+    
+    // Set appropriate headers for streaming text
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Transfer-Encoding', 'chunked');
+    
+    // Create streaming response
+    const stream = await openai.chat.completions.create({
+      model: MODEL as string,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPromptMessage }
+      ],
+      temperature: 0,
+      stream: true
+    });
+    
+    // Process the stream
+    let responseText = '';
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || '';
+      if (content) {
+        responseText += content;
+        res.write(content);
+      }
+    }
+    
+    // End the response
+    res.end();
+    console.log('Streaming response completed');
+  } catch (error) {
+    console.error('Error streaming response:', error);
+    if (!res.headersSent) {
+      res.status(500).send('Error generating response');
+    } else {
+      res.end();
+    }
+  }
 }
