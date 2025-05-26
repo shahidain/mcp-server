@@ -143,7 +143,7 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
       10. search-commodities(query: string)
       11. get-products(skip?: number, limit?: number)
       
-      Based on the user message, return JSON with the most appropriate tool name and parameters and requested format.
+      Based on the user message, return JSON with the most appropriate tool name and parameters and requested format. If no tool is applicable, return below object and give yoyr response text in response_text .
       Example output format:
       {
         "tool": "get-vendor-by-id",
@@ -153,7 +153,8 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
           "limit": 10,
           "skip": 0
         },
-        "requested_format": "table"
+        "requested_format": "table",
+        "response_text": "Your response text here"
       }
     `;
 
@@ -170,6 +171,7 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
     const response = await callWithRetry(config);
 
     // Parse and validate the response
+    console.log('OpenAI API response:', JSON.stringify(response, null, 2));
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI API');
@@ -177,17 +179,6 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
     
     try {
       const parsedContent = JSON.parse(content);
-      
-      // Validate response structure
-      if (!parsedContent.tool || typeof parsedContent.tool !== 'string') {
-        throw new Error('Invalid tool name in AI response');
-      }
-      
-      if (!parsedContent.parameters || typeof parsedContent.parameters !== 'object') {
-        // Use empty parameters if none provided
-        parsedContent.parameters = {};
-      }
-      
       return parsedContent;
     } catch (parseError) {
       throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);

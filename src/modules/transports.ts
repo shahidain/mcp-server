@@ -157,7 +157,7 @@ export function setupMessageEndpoint(app: any) {
             
             // Handle general responses by streaming the response as plain text
             res.setHeader('Content-Type', 'text/plain');
-            return res.status(200).send(llmApiResponse);
+            return res.status(200).send(llmApiResponse?.response_text);
             
           } catch (error) {
             console.error(`Error in calling tool for Session ID: ${sessionId}`, error);
