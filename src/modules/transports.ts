@@ -150,9 +150,9 @@ export function setupMessageEndpoint(app: any) {
                 const searchVendors = await vendorService.searchVendors(searchQuery);
                 return streamMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message, res);
               
-                case "get-products":
-                const products = await ProductService.getProducts(limit, skip);
-                return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, res);
+              case "get-products":
+              const products = await ProductService.getProducts(limit, skip);
+              return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, res);
             }
             
             // Handle general responses by streaming the response as plain text
