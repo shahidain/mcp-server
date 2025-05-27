@@ -1,6 +1,7 @@
 import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
 import { Response } from 'express';
+import { SystemPromtForTool } from './prompts.js';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -128,40 +129,11 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
   validateApiKey();
   
   try {
-    // Define comprehensive tool schema for the AI to use
-    const systemPrompt = `
-      You are an AI tool router. Available tools are:
-      1. get-vendors(limit?: number, skip?: number)
-      2. get-vendor-by-id(id: number)
-      3. search-vendors(query: string)
-      4. get-users(department?: string, role?: string, limit?: number, skip?: number)
-      5. get-user-by-id(id: number)
-      6. get-roles(limit?: number, skip?: number)
-      7. get-role-by-id(id: number)
-      8. get-commodities(skip?: number, limit?: number)
-      9. get-commodity-by-id(id: number)
-      10. search-commodities(query: string)
-      11. get-products(skip?: number, limit?: number)
-      
-      Based on the user message, return JSON with the most appropriate tool name and parameters and requested format. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
-      Example output format:
-      {
-        "tool": "get-vendor-by-id",
-        "parameters": {
-          "id": 42,
-          "query": "search term",
-          "limit": 10,
-          "skip": 0
-        },
-        "requested_format": "table",
-        "response_text": "Your response text here"
-      }
-    `;
-
+    
     const config = {
       model: MODEL,
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: SystemPromtForTool },
         { role: 'user', content: userMessage }
       ],
       temperature: 0,
@@ -197,11 +169,9 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
  * @param res - Express response object for streaming (optional)
  * @returns Markdown table as string (if not streaming)
  */
-export async function getMarkdownTableFromJson(inputJson: string, userPrompt: string): Promise<string> {
-  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object present it in key and values format. key column text should be as 'Property Name' and value column text should be as 'Value'.Property Name column should be in proper case, During conversion, for true use Yes and for false use No, treat same for bool values. null or (null) should be presented as blank string. If the JSON is empty, return "No data available".`;
-
+export async function getMarkdownTableFromJson(inputJson: string, userPrompt: string, systemPrompt: string): Promise<string> {
+  
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
-
   const config = {
     model: MODEL,
     messages: [
@@ -233,10 +203,10 @@ export async function getMarkdownTableFromJson(inputJson: string, userPrompt: st
 export async function streamMarkdownTableFromJson(
   inputJson: string, 
   userPrompt: string, 
+  systemPrompt: string,
   res: Response
 ): Promise<void> {
-  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object present it in key and values format. key column text should be as 'Property Name' and value column text should be as 'Value'.Property Name column should be in proper case, During conversion, for true use Yes and for false use No, treat same for bool values. null or (null) should be presented as blank string. If the JSON is empty, return "No data available".`;
-
+  
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
 
   try {
