@@ -198,21 +198,29 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
  * @returns Markdown table as string (if not streaming)
  */
 export async function getMarkdownTableFromJson(inputJson: string, userPrompt: string): Promise<string> {
-  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows. during conversion, for true use Yes and for false use No, treat same for boolean values. If the JSON is empty, return "No data available". null should be represented as blank string.`;
+  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object present it in key and values format. key column text should be as 'Property Name' and value column text should be as 'Value'.Property Name column should be in proper case, During conversion, for true use Yes and for false use No, treat same for bool values. null or (null) should be presented as blank string. If the JSON is empty, return "No data available".`;
 
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
 
   const config = {
     model: MODEL,
     messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPromptMessage }
+      { role: 'system', content: [{"type": "input_text", "text": systemPrompt}] },
+      { role: 'user', content: [{"type": "input_text", "text": userPromptMessage}] }
     ],
+    text: {
+      "format": {
+        "type": "text"
+      }
+    },
+    reasoning: {},
+    tools: [],
     temperature: 0
   };
 
   const response = await callWithRetry(config);
   const content = response.choices[0]?.message?.content;
+  console.log('OpenAI API data format response:', JSON.stringify(response, null, 2));
   return content;
 }
 
@@ -227,7 +235,7 @@ export async function streamMarkdownTableFromJson(
   userPrompt: string, 
   res: Response
 ): Promise<void> {
-  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object, present keys and values as rows. during conversion, for true use Yes and for false use No, treat same for boolean values. If the JSON is empty, return "No data available". null value should be represented as blank string.`;
+  const systemPrompt = `You are a data converter. Convert the provided JSON into a readable Markdown table. If it's an array, use the keys as table headers in proper case. If it's an object present it in key and values format. key column text should be as 'Property Name' and value column text should be as 'Value'.Property Name column should be in proper case, During conversion, for true use Yes and for false use No, treat same for bool values. null or (null) should be presented as blank string. If the JSON is empty, return "No data available".`;
 
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
 
