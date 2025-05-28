@@ -14,6 +14,7 @@ const vendorService = new SqlVendorService();
 const userService = new SqlUserService();
 const commoditiesService = new SqlCommodityService();
 const roleService = new SqlRoleService();
+import { DataFormat } from "../utils/utilities.js";
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
   // Create an initial response endpoint that returns JSON right away with session ID
@@ -94,7 +95,7 @@ export function setupMessageEndpoint(app: any) {
             console.log(`LLM API Response: ${JSON.stringify(llmApiResponse)}`);
             const toolName = llmApiResponse?.tool;
             console.log(`Tool to call with format: ${toolName} - ${JSON.stringify(llmApiResponse)}`);
-            const format = llmApiResponse?.format || "table";
+            const format: DataFormat = llmApiResponse?.requested_format || DataFormat.MarkdownTable;
             const searchQuery: string | null | undefined = llmApiResponse?.parameters?.query;
             const skip: number | undefined = llmApiResponse?.parameters?.skip;
             const limit: number | undefined = llmApiResponse?.parameters?.limit;
@@ -105,55 +106,55 @@ export function setupMessageEndpoint(app: any) {
               case "get-commodities":
                 const commodities = await commoditiesService.getPaginatedCommodities();
                 // Use streaming response instead of waiting for full response
-                return streamMarkdownTableFromJson(JSON.stringify(commodities), req.body.message, SystemPromptForArray, res);
+                return streamMarkdownTableFromJson(JSON.stringify(commodities), req.body.message, SystemPromptForArray, res, format);
                 
               case "get-commodity-by-id":
                 const commoditiy = await commoditiesService.getCommodityById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(commoditiy), req.body.message, SystemPromptForObject, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(commoditiy), req.body.message, SystemPromptForObject, res, format);
+
               case "search-commodities":
                 const searchCommodity = await commoditiesService.searchCommodities(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchCommodity), req.body.message,SystemPromptForArray, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(searchCommodity), req.body.message,SystemPromptForArray, res, format);
+
               case "get-roles":
                 const roles = await roleService.getPaginatedRoles(skip, limit);
-                return streamMarkdownTableFromJson(JSON.stringify(roles), req.body.message, SystemPromptForArray, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(roles), req.body.message, SystemPromptForArray, res, format);
+
               case "get-role-by-id":
                 const role = await roleService.getRoleById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(role), req.body.message, SystemPromptForObject, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(role), req.body.message, SystemPromptForObject, res, format);
+
               case "search-roles":
                 const searchRoles = await roleService.searchRoles(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchRoles), req.body.message, SystemPromptForArray, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(searchRoles), req.body.message, SystemPromptForArray, res, format);
+
               case "get-users":
                 const users = await userService.getPaginatedUsers(skip, limit);
-                return streamMarkdownTableFromJson(JSON.stringify(users), req.body.message, SystemPromptForArray, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(users), req.body.message, SystemPromptForArray, res, format);
+
               case "get-user-by-id":
                 const user = await userService.getUserById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(user), req.body.message, SystemPromptForObject, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(user), req.body.message, SystemPromptForObject, res, format);
+
               case "search-users":
                 const searchUsers = await userService.searchUsers(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchUsers), req.body.message, SystemPromptForArray, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(searchUsers), req.body.message, SystemPromptForArray, res, format);
+
               case "get-vendors":
                 const vendors = await vendorService.getPaginatedVendors(skip, limit);
-                return streamMarkdownTableFromJson(JSON.stringify(vendors), req.body.message, SystemPromptForArray, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(vendors), req.body.message, SystemPromptForArray, res, format);
+
               case "get-vendor-by-id":
                 const vendor = await vendorService.getVendorById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(vendor), req.body.message, SystemPromptForObject, res);
-                
+                return streamMarkdownTableFromJson(JSON.stringify(vendor), req.body.message, SystemPromptForObject, res, format);
+
               case "search-vendors":
                 const searchVendors = await vendorService.searchVendors(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message, SystemPromptForArray, res);
-              
+                return streamMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message, SystemPromptForArray, res, format);
+
               case "get-products":
               const products = await ProductService.getProducts(limit, skip);
-              return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, SystemPromptForArray, res);
+              return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, SystemPromptForArray, res, format);
             }
             
             // Handle general responses by streaming the response as plain text

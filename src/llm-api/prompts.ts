@@ -16,7 +16,7 @@ export const SystemPromtForTool: string = `
   10. search-commodities(query: string)
   11. get-products(skip?: number, limit?: number)
   
-  Based on the user message, return JSON with the most appropriate tool name and parameters and requested format. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
+  Based on the user message, return JSON with the most appropriate tool name and parameters and requested format, available formats are markdown-table, markdown-text, pie, bar, line and scatter. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
   Example output format:
   {
     "tool": "get-vendor-by-id",
@@ -26,7 +26,22 @@ export const SystemPromtForTool: string = `
       "limit": 10,
       "skip": 0
     },
-    "requested_format": "table",
+    "requested_format": "markdown-table",
     "response_text": "Your response text here"
   }
 `
+
+export const ChartPrompt: string = `You are a data converter expert. Below are available chart types and their required data format
+  1. pie
+  2. bar
+  3. line
+  4. scatter
+  Convert the provided JSON data into best suitable chart format. If the JSON is empty, return "No data available". null or (null) value should be represented as 0. Give response in below format, no explanation. Example output JSON format:
+  {
+  "chart_type": "pie",
+  "chart_data" : [],
+  "chart_title" :  "Chart Title",
+  "xKey": should be chart data x axis key name,
+  "yKey": should be chart data y axis key name,
+  "description": "Description of the chart as per user request (markdown format)",
+}`;

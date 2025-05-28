@@ -2,6 +2,9 @@ import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
 import { Response } from 'express';
 import { SystemPromtForTool } from './prompts.js';
+import { DataFormat } from '../utils/utilities.js';
+import { format } from 'path';
+import { ChartPrompt } from './prompts.js';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -204,7 +207,8 @@ export async function streamMarkdownTableFromJson(
   inputJson: string, 
   userPrompt: string, 
   systemPrompt: string,
-  res: Response
+  res: Response,
+  dataFormat: DataFormat,
 ): Promise<void> {
   
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
@@ -217,6 +221,27 @@ export async function streamMarkdownTableFromJson(
       throw new Error('OpenAI model is not configured');
     }
     
+    const config = {
+      model: MODEL as string,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPromptMessage }
+      ],
+      temperature: 0,
+      stream: true
+    };
+
+    console.log('LLM returned data format:', dataFormat);
+    if (dataFormat !== DataFormat.MarkdownTable && dataFormat !== DataFormat.MarkdownText) { 
+      config.messages[0] = {role: 'system', content: ChartPrompt};
+      config.stream = false;
+      const response = await callWithRetry(config);
+      const content = response.choices[0]?.message?.content;
+      console.log('OpenAI API chart format response:', content);
+      res.status(200).send(content);
+      res.end();
+      return;
+    }
     // Set appropriate headers for streaming text
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Transfer-Encoding', 'chunked');
@@ -225,15 +250,7 @@ export async function streamMarkdownTableFromJson(
     res.flushHeaders();
     
     // Create streaming response
-    const stream = await openai.chat.completions.create({
-      model: MODEL as string,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPromptMessage }
-      ],
-      temperature: 0,
-      stream: true
-    });
+    const stream = await streamWithRetry(config);
     
     // Process the stream
     let responseText = '';

@@ -19,7 +19,6 @@ async function main() {
   try {
     console.log('Initializing Sample MCP Server...');
     dotenv.config();
-    // Create the MCP Server instance
     const server = new McpServer({
       name: 'sample-mcp-server',
       version: '1.0.0',
@@ -28,40 +27,25 @@ async function main() {
         tools: {},
       },
     });
-    
-    console.log('Registering product and user tools...');
-    
-    // Register all product-related tools
+   
     registerProductTools(server);
-    
-    // Register all user-related tools
     registerUserTools(server);
-
-    // Register all commodity-related tools
     registerCommodityTools(server);
-
-    // Register all role-related tools
-    registerRoleTools(server);    // Register all currency-related tools
+    registerRoleTools(server);
     registerCurrencyTools(server);
-
-    // Register all vendor-related tools
     registerVendorTools(server);
     
     const app = express();
-    
-    // Configure CORS
+
     const corsOptions = {
-      origin: '*', // Allow all origins
+      origin: '*',
       methods: ['GET', 'POST', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true,
       optionsSuccessStatus: 200
     };
     
-    // Apply CORS middleware globally
     app.use(cors(corsOptions));
-    
-    // Parse JSON request bodies
     app.use(express.json());
     
     setupSSEEndpoint(app, server);
