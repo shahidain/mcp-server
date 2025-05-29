@@ -155,6 +155,10 @@ export function setupMessageEndpoint(app: any) {
               case "get-products":
               const products = await ProductService.getProducts(limit, skip);
               return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, SystemPromptForArray, res, format);
+
+              case "get-product-by-id":
+              const product = await ProductService.getProductById(id);
+              return streamMarkdownTableFromJson(JSON.stringify(product), req.body.message, SystemPromptForObject, res, format);
             }
             
             // Handle general responses by streaming the response as plain text

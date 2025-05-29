@@ -16,7 +16,7 @@ export const SystemPromtForTool: string = `
   10. search-commodities(query: string)
   11. get-products(skip?: number, limit?: number)
   
-  Based on the user message, return JSON with the most appropriate tool name and parameters and requested format, available formats are markdown-table, markdown-text, pie, bar, line and scatter. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
+  Based on the user message, return JSON with the most appropriate tool name and parameters with requested format, available formats are markdown-table, markdown-text, pie, bar, line and scatter. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
   Example output format:
   {
     "tool": "get-vendor-by-id",
