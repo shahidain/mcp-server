@@ -196,7 +196,8 @@ async function sendMessages(transport: SSEServerTransport) {
           serverStatus: "ready"
         }
       }
-    });    console.log(`Welcome message sent to client. Session ID: ${transport.sessionId}`);
+    });    
+    console.log(`Welcome message sent to client. Session ID: ${transport.sessionId}`);
     return true;
   } catch (error) {
     console.error(`Failed to send welcome message. Session ID: ${transport.sessionId}`, error);

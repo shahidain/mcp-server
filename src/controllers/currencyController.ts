@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { SqlCurrencyService } from '../services/sqlCurrencyService.js';
-import type { Currency } from '../db-models/currency.js';
 
 // Define TextContent interface for our responses
 interface TextContent {
