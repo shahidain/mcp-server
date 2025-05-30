@@ -13,7 +13,7 @@ export class SqlCommodityService {
             request.input('limit', sql.Int, limit);
 
             const result = await request.query(
-                `SELECT * FROM Commodities WHERE Deleted = 0 ORDER BY Id OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY`
+                `SELECT * FROM Commodities ORDER BY Id OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY`
             );
 
             return result.recordset;
@@ -31,7 +31,7 @@ export class SqlCommodityService {
             request.input('id', sql.Int, id);
 
             const result = await request.query(
-                `SELECT * FROM Commodities WHERE Id = @id AND Deleted = 0`
+                `SELECT * FROM Commodities WHERE Id = @id AND (Deleted = 0 OR Deleted IS NULL)`
             );
 
             return result.recordset[0] || null;
