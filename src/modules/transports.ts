@@ -1,7 +1,7 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { Request, Response } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getToolToCall, streamMarkdownTableFromJson } from "../llm-api/llmTools.js";
+import { getToolToCall, streamMarkdownTableFromJson, streamResponseText } from "../llm-api/llmTools.js";
 import { SqlVendorService } from "../services/sqlVendorService.js";
 import { SqlUserService } from '../services/sqlUserService.js';
 import { SqlCommodityService } from "../services/sqlCommodityService.js";
@@ -159,9 +159,17 @@ export function setupMessageEndpoint(app: any) {
               case "get-product-by-id":
               const product = await ProductService.getProductById(id);
               return streamMarkdownTableFromJson(JSON.stringify(product), req.body.message, SystemPromptForObject, res, format);
+
+              case "search-products":
+                const searchProducts = await ProductService.searchProducts(searchQuery);
+                return streamMarkdownTableFromJson(JSON.stringify(searchProducts?.products), req.body.message, SystemPromptForArray, res, format);
             }
             
             // Handle general responses by streaming the response as plain text
+            if (llmApiResponse?.response_text) {
+              return streamResponseText(llmApiResponse.response_text, res);
+            }
+            // Fallback to sending the response as plain text
             res.setHeader('Content-Type', 'text/plain');
             return res.status(200).send(llmApiResponse?.response_text);
             

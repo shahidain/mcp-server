@@ -197,6 +197,40 @@ export async function getMarkdownTableFromJson(inputJson: string, userPrompt: st
   return content;
 }
 
+export async function streamResponseText(responseText: string, res: Response): Promise<void> {
+  try {
+    // Set appropriate headers for streaming text
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('connection', 'keep-alive');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.flushHeaders();
+    
+    // Write the response text in chunks
+    const words = responseText.split(' ');
+    const chunkSize = 3; // Number of words per chunk
+    for (let i = 0; i < words.length; i += chunkSize) {
+      const chunk = words.slice(i, i + chunkSize).join(' ') + (i + chunkSize < words.length ? ' ' : '');
+      res.write(chunk);
+      // Add a small delay to make streaming visible (optional)
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    res.on('close', () => {
+      console.log('Client closed connection during streaming');
+      res.end();
+    });
+    // End the response
+    res.end();
+  } catch (error) {
+    console.error('Error streaming response:', error);
+    if (!res.headersSent) {
+      res.status(500).send('Error generating response');
+    } else {
+      res.end();
+    }
+  }
+}
+
 /**
  * Streams the markdown table conversion directly to the client
  * @param inputJson - The JSON data to convert to markdown

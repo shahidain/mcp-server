@@ -34,7 +34,7 @@ export class ProductService {
   /**
    * Search products by query term
    */
-  static async searchProducts(query: string): Promise<ProductsResponse> {
+  static async searchProducts(query: string | null | undefined): Promise<ProductsResponse> {
     const url = `${API_BASE_URL}/products/search`;
     const response = await axios.get<ProductsResponse>(url, {
       params: { q: query }
