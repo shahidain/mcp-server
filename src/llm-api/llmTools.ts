@@ -146,7 +146,7 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
     const response = await callWithRetry(config);
 
     // Parse and validate the response
-    console.log('OpenAI API response:', JSON.stringify(response, null, 2));
+    console.log('OpenAI API response:', response);
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI API');

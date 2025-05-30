@@ -92,7 +92,7 @@ export function setupMessageEndpoint(app: any) {
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
             const llmApiResponse: any = await getToolToCall(req.body.message);
-            console.log(`LLM API Response: ${JSON.stringify(llmApiResponse)}`);
+            console.log('LLM API Response Message:', llmApiResponse);
             const toolName = llmApiResponse?.tool;
             console.log(`Tool to call with format: ${toolName} - ${JSON.stringify(llmApiResponse)}`);
             const format: DataFormat = llmApiResponse?.requested_format || DataFormat.MarkdownTable;
