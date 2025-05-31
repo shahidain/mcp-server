@@ -1,7 +1,7 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { Request, Response } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getToolToCall, streamMarkdownTableFromJson, streamResponseText, streamMarkdownTextFromJson } from "../llm-api/llmTools.js";
+import { getToolToCall, streamMarkdownTableFromJson, streamResponseText, streamMarkdownTextFromJson, getJQL } from "../llm-api/llmTools.js";
 import { SqlVendorService } from "../services/sqlVendorService.js";
 import { SqlUserService } from '../services/sqlUserService.js';
 import { SqlCommodityService } from "../services/sqlCommodityService.js";
@@ -9,6 +9,9 @@ import { SqlRoleService } from "../services/sqlRoleService.js";
 import { ProductService } from "../services/productService.js";
 import { SystemPromptForArray, SystemPromptForObject } from  "../llm-api/prompts.js";
 import { JiraService } from "../services/jiraService.js";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const transports: { [sessionId: string]: SSEServerTransport } = {};
 const vendorService = new SqlVendorService();
@@ -169,6 +172,14 @@ export function setupMessageEndpoint(app: any) {
               case "get-jira-issue-by-id":
                 const jiraIssue = await JiraService.getIssueById(id);
                 return streamMarkdownTextFromJson(JSON.stringify(jiraIssue), req.body.message, res);
+              
+              case "search-jira-issues":
+                const jqlQuey = await getJQL(req.body.message);
+                console.log(`JQL Query: ${jqlQuey}`);
+                const jiraIssues = await JiraService.searchIssues(jqlQuey);
+                const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
+                const userPrompt = `${req.body.message}\nCreate a hyperlink on 'key' field with format like ${linkPattern} having target attribute "_blank". Field customfield_10016 is Story Points.`;
+                return streamMarkdownTableFromJson(JSON.stringify(jiraIssues?.issues), userPrompt, SystemPromptForArray, res, format);
             }
             
             // Handle general responses by streaming the response as plain text

@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
 import { Response } from 'express';
-import { SystemPromtForTool, SystemPromptForChart, SystemPromptForText } from './prompts.js';
+import { SystemPromtForTool, SystemPromptForChart, SystemPromptForText, SystemPromptForJQL } from './prompts.js';
 import { DataFormat } from '../utils/utilities.js';
 import { format } from 'path';
 
@@ -114,6 +114,39 @@ function validateApiKey(): void {
     throw new Error('OpenAI API key is not configured. Please add OPENAI_API_KEY to your .env file.');
   }
 }
+
+
+export async function getJQL(userMessage: string): Promise<string> {
+  
+  if (!userMessage || typeof userMessage !== 'string') {
+    throw new Error('Invalid user message provided');
+  }
+  validateApiKey();
+  try {
+    const config = {
+      model: MODEL,
+      messages: [
+        { role: 'system', content: SystemPromptForJQL },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0,
+      response_format: { type: "text" }
+    };
+
+    const response = await callWithRetry(config);
+
+    console.log('OpenAI API response:', response);
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from OpenAI API');
+    }
+    
+    return content;
+  } catch (error) {
+    console.error('Error calling OpenAI API:', error);
+    throw new Error(`Failed to process request with AI: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
 
 /**
  * Determines which tool to call based on user message using OpenAI

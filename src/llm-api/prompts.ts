@@ -21,7 +21,7 @@ export const SystemPromtForTool: string = `
   get-product-by-id(id: number)
   search-products(query: string)
   get-jira-issue-by-id(id: string)
-  get-jira-issues(query: string, limit?: number, skip?: number)
+  search-jira-issues(query: string, limit?: number, skip?: number)
   
   based on the user message, return JSON with the most appropriate tool name and parameters with requested format, available formats are markdown-table, markdown-text, pie, bar, line and scatter. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
   

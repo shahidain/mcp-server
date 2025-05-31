@@ -20,26 +20,6 @@ if (!JIRA_API_TOKEN) {
 }
 
 export class JiraService {
-  /**
-   * Fetches all issues from Jira with optional limit and skip parameters.
-   * @param limit - Maximum number of issues to return (default is 50).
-   * @param skip - Number of issues to skip for pagination (default is 0).
-   */  static async getPaginatedIssues(limit: number = 50, skip: number = 0): Promise<JiraIssue> {
-    const url = `${JIRA_API_URL}/issues`;
-    const params = { limit, skip };
-    
-    const headers = JIRA_API_TOKEN && JIRA_USERNAME ? {
-      Authorization: `Basic ${Buffer.from(`${JIRA_USERNAME}:${JIRA_API_TOKEN}`).toString('base64')}`,
-      'Content-Type': 'application/json'
-    } : {};
-    
-    const response = await axios.get<JiraIssue>(url, { 
-      params,
-      headers
-    });
-    
-    return response.data;
-  }
 
   /**
    * Fetches a specific issue by its ID from Jira.
@@ -62,7 +42,7 @@ export class JiraService {
    * @param query - The search query string.
    */
   static async searchIssues(query: string): Promise<JQLResponse> {
-    const url = `${JIRA_API_URL}/search?jql=${query}`;
+    const url = `${JIRA_API_URL}search?jql=${query}`;
     
     const headers = JIRA_API_TOKEN && JIRA_USERNAME ? {
       Authorization: `Basic ${Buffer.from(`${JIRA_USERNAME}:${JIRA_API_TOKEN}`).toString('base64')}`,
