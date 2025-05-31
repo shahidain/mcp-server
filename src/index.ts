@@ -8,9 +8,11 @@ import { registerRoleTools } from './controllers/roleController.js';
 import { registerCurrencyTools } from './controllers/currencyController.js';
 import { registerVendorTools } from './controllers/vendorController.js';
 import { setupSSEEndpoint, setupMessageEndpoint } from "./modules/transports.js";
+import { registerJiraTools } from './controllers/jiraController.js';
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import { register } from 'module';
 
 /**
  * Main function to set up and run the MCP server
@@ -34,6 +36,7 @@ async function main() {
     registerRoleTools(server);
     registerCurrencyTools(server);
     registerVendorTools(server);
+    registerJiraTools(server);
     
     const app = express();
 

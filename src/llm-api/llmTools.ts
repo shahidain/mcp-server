@@ -1,10 +1,9 @@
 import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
 import { Response } from 'express';
-import { SystemPromtForTool } from './prompts.js';
+import { SystemPromtForTool, SystemPromptForChart, SystemPromptForText } from './prompts.js';
 import { DataFormat } from '../utils/utilities.js';
 import { format } from 'path';
-import { ChartPrompt } from './prompts.js';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -231,6 +230,67 @@ export async function streamResponseText(responseText: string, res: Response): P
   }
 }
 
+
+export async function streamMarkdownTextFromJson(inputJson: string, 
+  userPrompt: string,
+  res: Response,) {
+    const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
+    try {
+      // Validate API key
+      validateApiKey();
+      
+      if (!MODEL) {
+        throw new Error('OpenAI model is not configured');
+      }
+      
+      const config = {
+        model: MODEL as string,
+        messages: [
+          { role: 'system', content: SystemPromptForText },
+          { role: 'user', content: userPromptMessage }
+        ],
+        temperature: 0,
+        stream: true
+      };
+      
+      // Set appropriate headers for streaming text
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Transfer-Encoding', 'chunked');
+      res.setHeader('connection', 'keep-alive');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.flushHeaders();
+      
+      // Create streaming response
+      const stream = await streamWithRetry(config);
+      
+      // Process the stream
+      let responseText = '';
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          responseText += content;
+          res.write(content);
+          const delay = Math.floor(Math.random() * 50) + 50;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+      res.on('close', () => {
+        console.log('Client closed connection during streaming');
+      });
+      // End the response
+      res.end();
+      console.log('Streaming response completed');
+    } catch (error) {
+      console.error('Error streaming response:', error);
+      if (!res.headersSent) {
+        res.status(500).send('Error generating response');
+      } else {
+        res.end();
+      }
+    }
+
+}
+
 /**
  * Streams the markdown table conversion directly to the client
  * @param inputJson - The JSON data to convert to markdown
@@ -267,7 +327,7 @@ export async function streamMarkdownTableFromJson(
 
     console.log('LLM returned data format:', dataFormat);
     if (dataFormat !== DataFormat.MarkdownTable && dataFormat !== DataFormat.MarkdownText) { 
-      config.messages[0] = {role: 'system', content: ChartPrompt};
+      config.messages[0] = {role: 'system', content: SystemPromptForChart};
       config.stream = false;
       const response = await callWithRetry(config);
       const content = response.choices[0]?.message?.content;
