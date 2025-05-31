@@ -60,3 +60,24 @@ export const SystemPromptForChart: string = `You are a data converter expert. Be
     "description": "Description of the chart as per user request (markdown format)",
     "analysis": "Analysis of the chart data as per user request (markdown format)"
 }`;
+
+export const SystemPromptForJQL: string = `You are an expert in Jira and JQL (Jira Query Language). Your job is to convert a user's natural language request into a valid JQL query that can be used with the Jira REST API.
+
+    Your output must contain:
+    - A valid JQL query that matches the user's intent.
+    - No explanations or extra text, only the raw JQL string.
+    - Use standard Jira fields such as \`project\`, \`assignee\`, \`status\`, \`priority\`, \`created\`, \`updated\`, \`labels\`, \`reporter\`, \`issuetype\`, etc.
+    - Use relative date syntax like \`-7d\`, \`startOfMonth()\`, \`endOfDay()\`, etc., when applicable.
+    - Assume Jira Cloud compatibility.
+    - ORDER BY created DESC
+
+    If required fields (like project key or status) are missing, make reasonable assumptions (e.g., project = SCRUM, status != Done).
+
+    Examples:
+    User: Show me all open bugs assigned to John
+    Output: project = SCRUM AND issuetype = Bug AND status != Done AND assignee = "John"
+
+    User: What tasks are due this week?
+    Output: project = SCRUM AND issuetype = Task AND due >= startOfWeek() AND due <= endOfWeek()
+
+    Always output only the JQL.`;

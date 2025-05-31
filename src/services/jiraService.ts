@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import axios from "axios";
-import { JiraIssue } from "../models/jira.js";
+import { JiraIssue, JiraResponse } from "../models/jira.js";
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -44,7 +44,8 @@ export class JiraService {
   /**
    * Fetches a specific issue by its ID from Jira.
    * @param id - The ID of the issue to fetch.
-   */  static async getIssueById(id: string): Promise<JiraIssue> {
+   */  
+  static async getIssueById(id: string): Promise<JiraIssue> {
     const url = `${JIRA_API_URL}/issue/${id}`;
     
     const headers = JIRA_API_TOKEN && JIRA_USERNAME ? {
@@ -53,6 +54,22 @@ export class JiraService {
     } : {};
     
     const response = await axios.get<JiraIssue>(url, { headers });
+    return response.data;
+  }
+
+  /**
+   * Searches for issues in Jira based on a query string.
+   * @param query - The search query string.
+   */
+  static async searchIssues(query: string): Promise<JiraResponse> {
+    const url = `${JIRA_API_URL}/search?jql=${query}`;
+    
+    const headers = JIRA_API_TOKEN && JIRA_USERNAME ? {
+      Authorization: `Basic ${Buffer.from(`${JIRA_USERNAME}:${JIRA_API_TOKEN}`).toString('base64')}`,
+      'Content-Type': 'application/json'
+    } : {};
+    
+    const response = await axios.get<JiraResponse>(url, { headers });
     return response.data;
   }
 }

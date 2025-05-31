@@ -75,4 +75,34 @@ export function registerJiraTools(server: McpServer) {
       }
     }
   );
+
+  server.tool(
+    'run-jira-query',
+    'Run a custom Jira query to search for issues',
+    {
+      query: z.string().describe('The search query string to filter Jira issues')
+    },
+    async ({ query }) => {
+      try {
+        const jiraResponse = await JiraService.searchIssues(query);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(jiraResponse, null, 2)
+            }
+          ]
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error doing Jira query: ${error instanceof Error ? error.message : String(error)}`
+            }
+          ]
+        };
+      }
+    }
+  );
 }
