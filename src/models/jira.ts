@@ -1,4 +1,4 @@
-export interface JiraResponse {
+export interface JQLResponse {
   expand: string;
   startAt: number;
   maxResults: number;

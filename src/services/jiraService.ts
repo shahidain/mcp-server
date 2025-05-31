@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import axios from "axios";
-import { JiraIssue, JiraResponse } from "../models/jira.js";
+import { JiraIssue, JQLResponse } from "../models/jira.js";
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -61,7 +61,7 @@ export class JiraService {
    * Searches for issues in Jira based on a query string.
    * @param query - The search query string.
    */
-  static async searchIssues(query: string): Promise<JiraResponse> {
+  static async searchIssues(query: string): Promise<JQLResponse> {
     const url = `${JIRA_API_URL}/search?jql=${query}`;
     
     const headers = JIRA_API_TOKEN && JIRA_USERNAME ? {
@@ -69,7 +69,7 @@ export class JiraService {
       'Content-Type': 'application/json'
     } : {};
     
-    const response = await axios.get<JiraResponse>(url, { headers });
+    const response = await axios.get<JQLResponse>(url, { headers });
     return response.data;
   }
 }
