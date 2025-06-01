@@ -1,3 +1,20 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
+export const SystemPromptForJqlResponse: string = `You are a data converter.
+
+Given response is output of JIRA JQL query from Jira.
+
+Requirements:
+- Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". 
+- Make sure the number of header columns exactly matches the number of data columns.
+- Ensure to create a hyperlink on 'key' and 'parent key' field with format like ${linkPattern} having target attribute "_blank". Field customfield_10016 is Story Points
+- Exclude description field from the output table unless it is specifically requested by the user.
+- Date fields should be formatted as "DD-MMM-YYYY HH:mm" in the output table.
+- Only output the Markdown table — no extra explanation or text.`;
+
+
 export const SystemPromptForArray: string = `You are a data converter. Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". Make sure the number of header columns exactly matches the number of data columns.`;
 
 export const SystemPromptForObject: string = `You are a data converter. Convert the provided JSON into a readable Markdown two column table with column header in proper case. During conversion, for true use Yes and for false use No, treat same for bool values. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". If the JSON is not an object, return "Sorry, I received a empty object".`;

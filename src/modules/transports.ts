@@ -7,11 +7,8 @@ import { SqlUserService } from '../services/sqlUserService.js';
 import { SqlCommodityService } from "../services/sqlCommodityService.js";
 import { SqlRoleService } from "../services/sqlRoleService.js";
 import { ProductService } from "../services/productService.js";
-import { SystemPromptForArray, SystemPromptForObject } from  "../llm-api/prompts.js";
+import { SystemPromptForArray, SystemPromptForObject, SystemPromptForJqlResponse } from  "../llm-api/prompts.js";
 import { JiraService } from "../services/jiraService.js";
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const transports: { [sessionId: string]: SSEServerTransport } = {};
 const vendorService = new SqlVendorService();
@@ -105,8 +102,7 @@ export function setupMessageEndpoint(app: any) {
             const skip: number | undefined = llmApiResponse?.parameters?.skip;
             const limit: number | undefined = llmApiResponse?.parameters?.limit;
             const id = llmApiResponse?.parameters?.id;
-            
-            // Using switch case to handle different tools
+
             switch (toolName) {
               case "get-commodities":
                 const commodities = await commoditiesService.getPaginatedCommodities();
@@ -177,35 +173,49 @@ export function setupMessageEndpoint(app: any) {
                 const jqlQuey = await getJQL(req.body.message);
                 console.log(`JQL Query: ${jqlQuey}`);
                 const jiraIssues = await JiraService.searchIssues(jqlQuey);
-                const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
-                const userPrompt = `${req.body.message}\nCreate a hyperlink on 'key' field with format like ${linkPattern} having target attribute "_blank". Field customfield_10016 is Story Points.`;
-                return streamMarkdownTableFromJson(JSON.stringify(jiraIssues?.issues), userPrompt, SystemPromptForArray, res, format);
+                return streamMarkdownTableFromJson(JSON.stringify(jiraIssues?.issues), req.body.message, SystemPromptForJqlResponse, res, format);
             }
             
-            // Handle general responses by streaming the response as plain text
             if (llmApiResponse?.response_text) {
               return streamResponseText(llmApiResponse.response_text, res);
             }
-            // Fallback to sending the response as plain text
             res.setHeader('Content-Type', 'text/plain');
             return res.status(200).send(llmApiResponse?.response_text);
-            
           } catch (error) {
-            console.error(`Error in calling tool for Session ID: ${sessionId}`, error);
-            res.status(200).type('text/plain').send(`Error calling LLM API - ${error instanceof Error ? error.message : String(error)}`);
+            console.error(`Error handling invoke tool for Session ID: ${sessionId}`, error);
+            await handleError(error, res);
           }
         } else {
           return await transport.handlePostMessage(req, res, req.body); 
         }
-      } catch (error) {
+      } catch (error) {  
         console.error(`Error handling message for Session ID: ${sessionId}`, error);
-        res.status(500).send("Internal Server Error");
+        await handleError(error, res);
       }
     } else {
       console.error(`No transport found for Session ID: ${sessionId}`);
       res.status(400).send("No transport found for sessionId");
     }
   });
+}
+
+async function handleError(error: any, res: Response) {
+  let statusCode = 500; 
+  let errorMessage = "An unexpected error occurred while processing the message";
+  if (error instanceof Error) {
+    if (error.message.includes('not found') || error.message.includes('404')) {
+      statusCode = 404;
+      errorMessage = "Requested object does not exist or you do not have permission to see it";
+    } else if (error.message.includes('unauthorized') || error.message.includes('forbidden') || 
+      error.message.includes('auth') || error.message.includes('permission')) {
+      statusCode = 403;
+    } else if (error.message.includes('rate limit') || error.message.includes('too many requests')) {
+      statusCode = 429;
+    } else if (error.message.includes('bad request') || error.message.includes('invalid')) {
+      statusCode = 400;
+    }
+  }
+  res.status(200).type('text/plain').send(errorMessage);
 }
 
 async function sendMessages(transport: SSEServerTransport) {

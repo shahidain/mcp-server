@@ -25,8 +25,8 @@ export class JiraService {
    * Fetches a specific issue by its ID from Jira.
    * @param id - The ID of the issue to fetch.
    */  
-  static async getIssueById(id: string): Promise<JiraIssue> {
-    const url = `${JIRA_API_URL}/issue/${id}`;
+  static async getIssueById(id: string): Promise<JiraIssue | string> {
+    const url = `${JIRA_API_URL}issue/${id}`;
     
     const headers = JIRA_API_TOKEN && JIRA_USERNAME ? {
       Authorization: `Basic ${Buffer.from(`${JIRA_USERNAME}:${JIRA_API_TOKEN}`).toString('base64')}`,
