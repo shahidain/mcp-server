@@ -1,6 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { JiraService } from '../services/jiraService.js';
+import { JiraIssueCreateRequest } from '../models/jira.js';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export function registerJiraTools(server: McpServer) {
 
@@ -69,6 +73,39 @@ export function registerJiraTools(server: McpServer) {
             {
               type: 'text',
               text: `Error doing Jira query: ${error instanceof Error ? error.message : String(error)}`
+            }
+          ]
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'create-jira-issue',
+    'Create a new Jira issue with the provided data',
+    {
+      project: z.string().describe('The Jira project key for the new issue'),
+      summary: z.string().describe('The summary of the new Jira issue'),
+      issuetype: z.string().describe('The type of the issue to be created'),
+      description: z.string().optional().describe('The description of the new Jira issue')
+    },
+    async ({ project, summary, issuetype, description }: { project: string, summary: string, issuetype: string, description?: string }) => {
+      try {
+        const newIssue = await JiraService.createIssue(project, summary, issuetype, description);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(newIssue, null, 2)
+            }
+          ]
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error creating Jira issue: ${error instanceof Error ? error.message : String(error)}`
             }
           ]
         };

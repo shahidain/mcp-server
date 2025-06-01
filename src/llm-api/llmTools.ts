@@ -303,7 +303,7 @@ export async function streamMarkdownTextFromJson(inputJson: string,
         if (content) {
           responseText += content;
           res.write(content);
-          const delay = Math.floor(Math.random() * 50) + 50;
+          const delay = Math.floor(Math.random() * 10) + 10;
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }

@@ -4,15 +4,17 @@ dotenv.config();
 const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
 export const SystemPromptForJqlResponse: string = `You are a data converter.
 
-Given response is output of JIRA JQL query from Jira.
-
 Requirements:
-- Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". 
+- Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". 
+
 - Make sure the number of header columns exactly matches the number of data columns.
-- Ensure to create a hyperlink on 'key' and 'parent key' field with format like ${linkPattern} having target attribute "_blank". Field customfield_10016 is Story Points
-- Exclude description field from the output table unless it is specifically requested by the user.
-- Date fields should be formatted as "DD-MMM-YYYY HH:mm" in the output table.
-- Only output the Markdown table — no extra explanation or text.`;
+- Ensure to create a hyperlink on 'key' field with format like ${linkPattern}
+- All links in table should open in new tab.
+- Date fields should be formatted as "DD-MM-YY hh:mm AM/PM" in the output table.
+- Only output the Markdown table — no extra explanation or text.
+- Do not add or guess any values that are not present in the original JSON.
+- Exclude fields if requested by user.
+- null or (null) value should be represented as '' `;
 
 
 export const SystemPromptForArray: string = `You are a data converter. Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". Make sure the number of header columns exactly matches the number of data columns.`;
@@ -39,14 +41,16 @@ export const SystemPromtForTool: string = `
   search-products(query: string)
   get-jira-issue-by-id(id: string)
   search-jira-issues(query: string, limit?: number, skip?: number)
-  
+  create-jira-issue(project: string, summary: string, issuetype: string, description?: string)
+
   based on the user message, return JSON with the most appropriate tool name and parameters with requested format, available formats are markdown-table, markdown-text, pie, bar, line and scatter. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
+
+  default project is ${process.env.DEFAULT_PROJECT_KEY}
   
   Example output format:
   {
     "tool": "get-vendor-by-id",
     "parameters": {
-
       "id": 42,
       "query": "search term",
       "limit": 10,

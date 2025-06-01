@@ -16,7 +16,8 @@ const userService = new SqlUserService();
 const commoditiesService = new SqlCommodityService();
 const roleService = new SqlRoleService();
 
-import { DataFormat } from "../utils/utilities.js";
+import { DataFormat, GetJiraIssueSearchResponse } from "../utils/utilities.js";
+import { JiraIssue, JiraIssueSearchResponse } from "../models/jira.js";
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
   // Create an initial response endpoint that returns JSON right away with session ID
@@ -173,7 +174,13 @@ export function setupMessageEndpoint(app: any) {
                 const jqlQuey = await getJQL(req.body.message);
                 console.log(`JQL Query: ${jqlQuey}`);
                 const jiraIssues = await JiraService.searchIssues(jqlQuey);
-                return streamMarkdownTableFromJson(JSON.stringify(jiraIssues?.issues), req.body.message, SystemPromptForJqlResponse, res, format);
+                const jiraIssueSearchResponse: JiraIssueSearchResponse[] = GetJiraIssueSearchResponse(jiraIssues);
+                return streamMarkdownTableFromJson(JSON.stringify(jiraIssueSearchResponse), req.body.message, SystemPromptForJqlResponse, res, format);
+              case "create-jira-issue":
+                const { project, summary, issuetype, description } = llmApiResponse?.parameters;
+                const createdJiraIssue: JiraIssue | undefined = await JiraService.createIssue(project, summary, issuetype, description);
+                return res.status(200).type('text/plain').send(
+                  `Created JIRA issue with key: **${createdJiraIssue?.key}**`);
             }
             
             if (llmApiResponse?.response_text) {
@@ -181,6 +188,7 @@ export function setupMessageEndpoint(app: any) {
             }
             res.setHeader('Content-Type', 'text/plain');
             return res.status(200).send(llmApiResponse?.response_text);
+
           } catch (error) {
             console.error(`Error handling invoke tool for Session ID: ${sessionId}`, error);
             await handleError(error, res);
@@ -200,21 +208,7 @@ export function setupMessageEndpoint(app: any) {
 }
 
 async function handleError(error: any, res: Response) {
-  let statusCode = 500; 
-  let errorMessage = "An unexpected error occurred while processing the message";
-  if (error instanceof Error) {
-    if (error.message.includes('not found') || error.message.includes('404')) {
-      statusCode = 404;
-      errorMessage = "Requested object does not exist or you do not have permission to see it";
-    } else if (error.message.includes('unauthorized') || error.message.includes('forbidden') || 
-      error.message.includes('auth') || error.message.includes('permission')) {
-      statusCode = 403;
-    } else if (error.message.includes('rate limit') || error.message.includes('too many requests')) {
-      statusCode = 429;
-    } else if (error.message.includes('bad request') || error.message.includes('invalid')) {
-      statusCode = 400;
-    }
-  }
+  const errorMessage = error.message || "An unexpected error occurred while processing the message";
   res.status(200).type('text/plain').send(errorMessage);
 }
 

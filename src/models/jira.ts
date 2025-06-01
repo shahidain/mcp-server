@@ -1,3 +1,30 @@
+export interface JiraIssueSearchResponse {
+  key: string;
+  fixVersions?: string[];
+  type: string;
+  sprint?: string;
+  assignee?: string;
+  status: string;
+  storyPoints?: number;
+  created: Date;
+  updated?: Date;
+  summary?: string;
+  parent?: string | null;
+}
+
+export interface JiraIssueCreateRequest {
+  fields: {
+    project:{
+      key: string;
+    },
+    summary: string;
+    description?: {};
+    issuetype: {
+      name: string;
+    }
+  }
+}
+
 export interface JQLResponse {
   expand: string;
   startAt: number;
@@ -14,6 +41,15 @@ export interface JiraIssue {
   fields: JiraFields;
 }
 
+export interface Status {
+  self: string;
+  description: string;
+  iconUrl: string;
+  name: string;
+  id: string;
+  statusCategory: StatusCategory;
+}
+
 export interface JiraFields {
   statuscategorychangedate: string;
   issuetype: IssueType;
@@ -25,6 +61,7 @@ export interface JiraFields {
   fixVersions: any[];
   customfield_10033: any;
   aggregatetimespent: any;
+  status: Status;
   statusCategory: StatusCategory;
   resolution: any;
   timetracking: Timetracking;
@@ -60,6 +97,8 @@ export interface JiraFields {
   comment: CommentSection;
   assignee: User;
   worklog: any;
+  updated?: string;
+  parent: JiraIssue | null;
 }
 
 export interface IssueType {
