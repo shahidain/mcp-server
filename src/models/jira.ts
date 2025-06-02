@@ -21,7 +21,10 @@ export interface JiraIssueCreateRequest {
     description?: {};
     issuetype: {
       name: string;
-    }
+    },
+    parent?: {
+      key?: string;
+    };
   }
 }
 

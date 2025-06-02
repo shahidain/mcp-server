@@ -2,19 +2,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
-export const SystemPromptForJqlResponse: string = `You are a data converter.
+export const SystemPromptForJqlResponse: string = `You are a data converter. You are suppose to convert it as below requirements:
 
 Requirements:
 - Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". 
-
 - Make sure the number of header columns exactly matches the number of data columns.
 - Ensure to create a hyperlink on 'key' field with format like ${linkPattern}
-- All links in table should open in new tab.
-- Date fields should be formatted as "DD-MM-YY hh:mm AM/PM" in the output table.
-- Only output the Markdown table — no extra explanation or text.
+- Date fields should be formatted as "DD-MM-YY hh:mm AM/PM" of 'Asia/Kolkata' timezone in the output table.
 - Do not add or guess any values that are not present in the original JSON.
 - Exclude fields if requested by user.
-- null or (null) value should be represented as '' `;
+- null or (null) value should be represented as ''
+- Use relevent icons for different Status, not same icon should repeat for two different status.
+- Provide detailed summary of each record in well formatted markdown text, no horizontal line just after table`;
 
 
 export const SystemPromptForArray: string = `You are a data converter. Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". Make sure the number of header columns exactly matches the number of data columns.`;

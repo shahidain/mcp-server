@@ -176,7 +176,8 @@ export function setupMessageEndpoint(app: any) {
                 const jiraIssues = await JiraService.searchIssues(jqlQuey);
                 const jiraIssueSearchResponse: JiraIssueSearchResponse[] = GetJiraIssueSearchResponse(jiraIssues);
                 return streamMarkdownTableFromJson(JSON.stringify(jiraIssueSearchResponse), req.body.message, SystemPromptForJqlResponse, res, format);
-              case "create-jira-issue":
+              
+                case "create-jira-issue":
                 const { project, summary, issuetype, description } = llmApiResponse?.parameters;
                 const createdJiraIssue: JiraIssue | undefined = await JiraService.createIssue(project, summary, issuetype, description);
                 return res.status(200).type('text/plain').send(

@@ -111,6 +111,51 @@ export class JiraService {
       await handleJiraError(error);
     }
   }
+
+  /**
+   * Creates a sub-task for a given issue in Jira.
+   * @param project - The project key where the sub-task will be created.
+   * @param parentKey - The key of the parent issue.
+   * @param summary - The summary of the sub-task.
+   * @param description - Optional description for the sub-task.
+   */
+  static async createSubTask(project: string, parentKey: string, summary: string, description?: string): Promise<JiraIssue | undefined> {
+    const issueData: JiraIssueCreateRequest = {
+      fields: {
+        project: {
+          key: project
+        },
+        summary: summary,
+        description: {
+          type: 'doc',
+          version: 1,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: description || ''
+                }
+              ]
+            }
+          ]
+        },
+        issuetype: {
+          name: 'Sub-task'
+        },
+        parent: {
+          key: parentKey
+        }
+      }
+    };
+    try {
+      const response = await jiraClient.post<JiraIssue>('issue', issueData);
+      return response.data;
+    } catch (error) {
+      await handleJiraError(error);
+    }
+  }
 };
 
 

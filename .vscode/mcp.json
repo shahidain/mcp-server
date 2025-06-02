@@ -1,12 +1,10 @@
 {
   "servers": [
     {
-      "type": "stdio",
+      "type": "sse",
       "name": "Sample MCP Server",
-      "command": "node",
-      "args": ["${workspaceFolder}/dist/index.js"],
-      "workingDir": "${workspaceFolder}",
-      "preLaunchTask": "Build MCP Server"
+      "description": "A sample server for the Model Context Protocol (MCP) that provides SQL database services.",
+      "url": "http://localhost:4000/sse/stream"
     }
   ]
 }
