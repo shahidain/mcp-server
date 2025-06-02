@@ -18,7 +18,9 @@ export function GetJiraIssueSearchResponse(jqlResponse: JQLResponse | undefined)
     key: issue.key,
     fixVersions: issue.fields.fixVersions?.map(v => v.name) || [],
     type: issue.fields.issuetype.name,
-    sprint: `${issue.fields.customfield_10020[0]?.name} - ${issue.fields.customfield_10020[0]?.state || '-'}` || '',
+    sprint: issue.fields.customfield_10020 && issue.fields.customfield_10020[0]
+  ? `${issue.fields.customfield_10020[0]?.name} - ${issue.fields.customfield_10020[0]?.state || '-'}`
+  : '',
     assignee: issue.fields.assignee?.displayName || '',
     status: issue.fields.status.name,
     storyPoints: issue.fields.customfield_10016 || '-',

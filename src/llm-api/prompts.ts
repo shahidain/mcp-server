@@ -41,10 +41,11 @@ export const SystemPromtForTool: string = `
   get-jira-issue-by-id(id: string)
   search-jira-issues(query: string, limit?: number, skip?: number)
   create-jira-issue(project: string, summary: string, issuetype: string, description?: string)
+  create-jira-subtask(project: string, parentId: string, summary: string, description?: string)
 
   based on the user message, return JSON with the most appropriate tool name and parameters with requested format, available formats are markdown-table, markdown-text, pie, bar, line and scatter. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
 
-  default project is ${process.env.DEFAULT_PROJECT_KEY}
+  default JIRA project is ${process.env.DEFAULT_PROJECT_KEY}
   
   Example output format:
   {
@@ -89,7 +90,7 @@ export const SystemPromptForJQL: string = `You are an expert in Jira and JQL (Ji
     - Use standard Jira fields such as \`project\`, \`assignee\`, \`status\`, \`priority\`, \`created\`, \`updated\`, \`labels\`, \`reporter\`, \`issuetype\`, etc.
     - Use relative date syntax like \`-7d\`, \`startOfMonth()\`, \`endOfDay()\`, etc., when applicable.
     - Assume Jira Cloud compatibility.
-    - ORDER BY created DESC
+    - Keep ORDER BY priority DESC unless specified by user
 
     If required fields (like project key or status) are missing, make reasonable assumptions (e.g., project = SCRUM, status != Done).
 

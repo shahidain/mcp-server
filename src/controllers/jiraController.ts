@@ -112,4 +112,38 @@ export function registerJiraTools(server: McpServer) {
       }
     }
   );
+
+
+  server.tool(
+    'create-jira-subtask',
+    'Create a sub-task for a given Jira issue',
+    {
+      project: z.string().describe('The Jira project key where the sub-task will be created'),
+      parentId: z.string().describe('The ID of the parent Jira issue'),
+      summary: z.string().describe('The summary of the sub-task'),
+      description: z.string().optional().describe('The description of the sub-task')
+    },
+    async ({ project, parentId, summary, description }: { project: string, parentId: string, summary: string, description?: string }) => {
+      try {
+        const newSubTask = await JiraService.createSubTask(project, parentId, summary, description);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(newSubTask, null, 2)
+            }
+          ]
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error creating Jira sub-task: ${error instanceof Error ? error.message : String(error)}`
+            }
+          ]
+        };
+      }
+    }
+  );
 }

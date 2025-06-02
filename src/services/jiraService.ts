@@ -51,7 +51,7 @@ export class JiraService {
    * Fetches a specific issue by its ID from Jira.
    * @param id - The ID of the issue to fetch.
    */  
-  static async getIssueById(id: string): Promise<JiraIssue | undefined> {
+  static async getIssueById(id: string | undefined): Promise<JiraIssue | undefined> {
     try {
       const response = await jiraClient.get<JiraIssue>(`issue/${id}`);
       return response.data;
@@ -77,13 +77,13 @@ export class JiraService {
    * Creates a new issue in Jira.
    * @param issueData - The data for the new issue to be created.
    */
-  static async createIssue(project: string, summary: string, issuetype: string, description?: string): Promise<JiraIssue | undefined> {
+  static async createIssue(project: string | undefined, summary: string | undefined, issuetype: string | undefined, description?: string): Promise<JiraIssue | undefined> {
     const issueData: JiraIssueCreateRequest = {
       fields: {
         project: {
-          key: project
+          key: project || process.env.DEFAULT_PROJECT_KEY || ''
         },
-        summary: summary,
+        summary: summary || '',
         description: {
           type: 'doc',
           version: 1,
@@ -100,7 +100,7 @@ export class JiraService {
           ]
         },
         issuetype: {
-          name: issuetype
+          name: issuetype || ''
         }
       }
     };
@@ -119,13 +119,13 @@ export class JiraService {
    * @param summary - The summary of the sub-task.
    * @param description - Optional description for the sub-task.
    */
-  static async createSubTask(project: string, parentKey: string, summary: string, description?: string): Promise<JiraIssue | undefined> {
+  static async createSubTask(project: string | undefined, parentKey: string | undefined, summary: string | undefined, description?: string): Promise<JiraIssue | undefined> {
     const issueData: JiraIssueCreateRequest = {
       fields: {
         project: {
-          key: project
+          key: project || process.env.DEFAULT_PROJECT_KEY || ''
         },
-        summary: summary,
+        summary: summary || '',
         description: {
           type: 'doc',
           version: 1,
@@ -142,7 +142,7 @@ export class JiraService {
           ]
         },
         issuetype: {
-          name: 'Sub-task'
+          name: 'Subtask'
         },
         parent: {
           key: parentKey

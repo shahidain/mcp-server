@@ -98,12 +98,18 @@ export function setupMessageEndpoint(app: any) {
             console.log('LLM API Response Message:', llmApiResponse);
             const toolName = llmApiResponse?.tool;
             console.log(`Tool to call with format: ${toolName} - ${JSON.stringify(llmApiResponse)}`);
+            
             const format: DataFormat = llmApiResponse?.requested_format || DataFormat.MarkdownTable;
             const searchQuery: string | null | undefined = llmApiResponse?.parameters?.query;
             const skip: number | undefined = llmApiResponse?.parameters?.skip;
             const limit: number | undefined = llmApiResponse?.parameters?.limit;
             const id = llmApiResponse?.parameters?.id;
-
+            const project = llmApiResponse?.parameters?.project;
+            const parentId = llmApiResponse?.parameters?.parentId;
+            const summary = llmApiResponse?.parameters?.summary;
+            const issuetype = llmApiResponse?.parameters?.issuetype;
+            const description = llmApiResponse?.parameters?.description;
+            
             switch (toolName) {
               case "get-commodities":
                 const commodities = await commoditiesService.getPaginatedCommodities();
@@ -175,13 +181,19 @@ export function setupMessageEndpoint(app: any) {
                 console.log(`JQL Query: ${jqlQuey}`);
                 const jiraIssues = await JiraService.searchIssues(jqlQuey);
                 const jiraIssueSearchResponse: JiraIssueSearchResponse[] = GetJiraIssueSearchResponse(jiraIssues);
-                return streamMarkdownTableFromJson(JSON.stringify(jiraIssueSearchResponse), req.body.message, SystemPromptForJqlResponse, res, format);
-              
-                case "create-jira-issue":
-                const { project, summary, issuetype, description } = llmApiResponse?.parameters;
+                const additionalMessage = `Here is the JIRA search result for your message, which I got by executing below JQL \n\n**${jqlQuey}**\n\n`;
+                return streamMarkdownTableFromJson(JSON.stringify(jiraIssueSearchResponse), req.body.message, SystemPromptForJqlResponse, res, format, additionalMessage);
+
+              case "create-jira-issue":
                 const createdJiraIssue: JiraIssue | undefined = await JiraService.createIssue(project, summary, issuetype, description);
                 return res.status(200).type('text/plain').send(
                   `Created JIRA issue with key: **${createdJiraIssue?.key}**`);
+
+              case "create-jira-subtask":
+                
+                const createdSubtask: JiraIssue | undefined = await JiraService.createSubTask(project, parentId, summary, description);
+                return res.status(200).type('text/plain').send(
+                  `Created JIRA subtask with key: **${createdSubtask?.key}** under parent issue: **${parentId}**`);
             }
             
             if (llmApiResponse?.response_text) {

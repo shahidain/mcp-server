@@ -336,6 +336,7 @@ export async function streamMarkdownTableFromJson(
   systemPrompt: string,
   res: Response,
   dataFormat: DataFormat,
+  additionalMessage?: string
 ): Promise<void> {
   
   const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
@@ -380,11 +381,12 @@ export async function streamMarkdownTableFromJson(
     const stream = await streamWithRetry(config);
     
     // Process the stream
-    let responseText = '';
+    let responseText = additionalMessage || '';
+    if (responseText)
+      res.write(responseText);
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || '';
       if (content) {
-        responseText += content;
         res.write(content);
       }
     }
