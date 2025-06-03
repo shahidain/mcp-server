@@ -265,8 +265,7 @@ export async function streamResponseText(responseText: string, res: Response): P
 
 
 export async function streamMarkdownTextFromJson(inputJson: string, 
-  userPrompt: string,
-  res: Response,) {
+  userPrompt: string, res: Response) {
     const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
     try {
       // Validate API key

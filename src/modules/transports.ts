@@ -18,6 +18,7 @@ const roleService = new SqlRoleService();
 
 import { DataFormat, GetJiraIssueSearchResponse } from "../utils/utilities.js";
 import { JiraIssue, JiraIssueSearchResponse } from "../models/jira.js";
+import { getApplication } from "../data/applications.js";
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
   // Create an initial response endpoint that returns JSON right away with session ID
@@ -109,6 +110,8 @@ export function setupMessageEndpoint(app: any) {
             const summary = llmApiResponse?.parameters?.summary;
             const issuetype = llmApiResponse?.parameters?.issuetype;
             const description = llmApiResponse?.parameters?.description;
+            const appName = llmApiResponse?.parameters?.appName;
+            const env = llmApiResponse?.parameters?.env;
             
             switch (toolName) {
               case "get-commodities":
@@ -194,6 +197,13 @@ export function setupMessageEndpoint(app: any) {
                 const createdSubtask: JiraIssue | undefined = await JiraService.createSubTask(project, parentId, summary, description);
                 return res.status(200).type('text/plain').send(
                   `Created JIRA subtask with key: **${createdSubtask?.key}** under parent issue: **${parentId}**`);
+              
+              case "get-application-status":
+                const application = await getApplication(appName, env);
+                if (!application) {
+                  return res.status(200).send(`Application ${appName} not found in environment ${env}`);
+                }
+                return streamMarkdownTextFromJson(JSON.stringify(application), req.body.message, res);
             }
             
             if (llmApiResponse?.response_text) {
