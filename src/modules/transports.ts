@@ -166,7 +166,7 @@ export function setupMessageEndpoint(app: any) {
 
               case "get-product-by-id":
               const product = await ProductService.getProductById(id);
-              return streamMarkdownTableFromJson(JSON.stringify(product), req.body.message, SystemPromptForObject, res, format);
+              return streamMarkdownTextFromJson(JSON.stringify(product), req.body.message, res);
 
               case "search-products":
                 const searchProducts = await ProductService.searchProducts(searchQuery);

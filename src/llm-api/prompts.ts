@@ -6,6 +6,7 @@ export const SystemPromptForJqlResponse: string = `You are a data converter. You
 
 Requirements:
 - Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". 
+- Show all fields unless user requested to exclude or condition fulfilled to exclude.
 - Make sure the number of header columns exactly matches the number of data columns.
 - Ensure to create a hyperlink on 'key' field with format like ${linkPattern}
 - Date fields should be formatted as "DD-MM-YY hh:mm AM/PM" of 'Asia/Kolkata' timezone in the output table.
@@ -13,7 +14,10 @@ Requirements:
 - Exclude fields if requested by user.
 - null or (null) value should be represented as ''
 - Use relevent icons for different Status, not same icon should repeat for two different status.
-- Provide detailed summary of each record in well formatted markdown text, no horizontal line just after table`;
+- Provide detailed summary of each record in well formatted markdown text
+- Do not show horizontal line just after table
+- Ensure to show flag icon for flagged field along with text. 
+- If there is no row with flagged field then do not show flagged column in table.`;
 
 
 export const SystemPromptForArray: string = `You are a data converter. Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". Make sure the number of header columns exactly matches the number of data columns.`;

@@ -10,6 +10,8 @@ export interface JiraIssueSearchResponse {
   updated?: Date;
   summary?: string;
   parent?: string | null;
+  flagged?: string | null;
+  subtasks?: number | null;
 }
 
 export interface JiraIssueCreateRequest {
