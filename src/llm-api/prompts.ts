@@ -13,11 +13,13 @@ Requirements:
 - Do not add or guess any values that are not present in the original JSON.
 - Exclude fields if requested by user.
 - null or (null) value should be represented as ''
-- Use relevent icons for different Status, not same icon should repeat for two different status.
+- Use small icons and status text both for different status e.g. for In Progress icon is 🚧, Done icon is ✅ and To Do icon is ⚪).
 - Provide detailed summary of each record in well formatted markdown text
 - Do not show horizontal line just after table
-- Ensure to show flag icon for flagged field along with text. 
-- If there is no row with flagged field then do not show flagged column in table.`;
+- If flagged field is not null then ensure to show small red color 'flag' icon 🚩 along with field value. 
+- If there is no row with flagged field then do not show flagged column in table.
+- Give deep detailed analysis of data in analysis key bullet points and markdown format, groupped properly
+- Always sum up all story points for sprint velocity`;
 
 
 export const SystemPromptForArray: string = `You are a data converter. Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". Make sure the number of header columns exactly matches the number of data columns.`;
@@ -75,6 +77,10 @@ export const SystemPromptForChart: string = `You are a data converter expert. Be
   Convert the provided JSON data into best suitable chart format. If the JSON is empty, return "No data available". If asked for analysis or visualization or summary then put it in analysis key in output json. 
   
   null or (null) value should be represented as 0. Give response in below format, no explanation. 
+
+  values should be numbers, if not then convert them to numbers. If the data is not suitable for chart then return "No data available" in data key and return empty array in data key.
+
+  If the data is not suitable for chart then return "No data available" in data key and return empty array in data key.
   
   Example output JSON format:
   {
@@ -93,6 +99,7 @@ export const SystemPromptForJQL: string = `You are an expert in Jira and JQL (Ji
     - A valid JQL query that matches the user's intent.
     - No explanations or extra text, only the raw JQL string.
     - Use standard Jira fields such as \`project\`, \`assignee\`, \`status\`, \`priority\`, \`created\`, \`updated\`, \`labels\`, \`reporter\`, \`issuetype\`, etc.
+    - Possible issuetype values are \`Bug\`, \`Task\`, \`Story\`, \`Epic\`, \`Sub Task\`, \`Subtask\`, \`Feature\`, \`Request\` and \`EMPTY\` etc.
     - Use relative date syntax like \`-7d\`, \`startOfMonth()\`, \`endOfDay()\`, etc., when applicable.
     - Assume Jira Cloud compatibility.
     - Keep ORDER BY priority DESC unless specified by user
