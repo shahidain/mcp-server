@@ -51,6 +51,19 @@ async function main() {
     app.use(cors(corsOptions));
     app.use(express.json());
     
+    // Health check endpoint for deployment monitoring
+    app.get('/health', (req, res) => {
+      res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'mcp-server',
+        version: '1.0.0',
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        environment: process.env.NODE_ENV || 'development'
+      });
+    });
+    
     setupSSEEndpoint(app, server);
     setupMessageEndpoint(app);
     
