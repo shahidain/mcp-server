@@ -118,6 +118,7 @@ JQL GENERATION RULES:
 - Issue types: Bug, Task, Story, Epic, "Sub Task"
 - Use quotes for multi-word values: assignee = "John Doe"
 - Date functions: startOfWeek(), endOfWeek(), startOfMonth(), endOfMonth(), startOfYear(), endOfYear()
+- Do not use fields like endDate
 - Relative dates: -1d, -7d, -30d, -1w, -1M, -1y
 - Status operators: status != "Done", status IN ("To Do", "In Progress")
 - Text search: summary ~ "keyword" OR description ~ "keyword"
