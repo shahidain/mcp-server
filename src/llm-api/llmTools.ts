@@ -205,13 +205,18 @@ export async function getToolToCall(userMessage: string): Promise<{tool: string,
  * @returns Markdown table as string (if not streaming)
  */
 export async function getMarkdownTableFromJson(inputJson: string, userPrompt: string, systemPrompt: string): Promise<string> {
-  
-  const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
   const config = {
     model: MODEL,
     messages: [
-      { role: 'system', content: [{"type": "input_text", "text": systemPrompt}] },
-      { role: 'user', content: [{"type": "input_text", "text": userPromptMessage}] }
+      { 
+        role: 'system', 
+        content: [{"type": "input_text", "text": systemPrompt}] },
+      { 
+          role: 'user', content: [
+          {"type": "input_text", "text": inputJson}, 
+          {"type": "input_text", "text": userPrompt}
+        ] 
+      }
     ],
     text: {
       "format": {
@@ -266,7 +271,6 @@ export async function streamResponseText(responseText: string, res: Response): P
 
 export async function streamMarkdownTextFromJson(inputJson: string, 
   userPrompt: string, res: Response) {
-    const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
     try {
       // Validate API key
       validateApiKey();
@@ -279,7 +283,8 @@ export async function streamMarkdownTextFromJson(inputJson: string,
         model: MODEL as string,
         messages: [
           { role: 'system', content: SystemPromptForText },
-          { role: 'user', content: userPromptMessage }
+          { role: 'user', content: inputJson },
+          { role: 'user', content: userPrompt }
         ],
         temperature: 0,
         stream: true
@@ -338,8 +343,6 @@ export async function streamMarkdownTableFromJson(
   additionalMessage?: string
 ): Promise<void> {
   
-  const userPromptMessage = `${userPrompt}:\n\n${inputJson}`;
-
   try {
     // Validate API key
     validateApiKey();
@@ -352,7 +355,8 @@ export async function streamMarkdownTableFromJson(
       model: MODEL as string,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPromptMessage }
+        { role: 'user', content: inputJson },
+        { role: 'user', content: userPrompt }
       ],
       temperature: 0,
       stream: true

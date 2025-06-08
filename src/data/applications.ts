@@ -51,24 +51,24 @@ const Applications: any = {
       'build': '1.0.2+release:478jk609.90'
     }
   },
-  'boss-ui': {
+  'dreams-api': {
     'dev': {
-      'name': 'Boss UI',
-      'error': 'Failed to fetch Boss UI application details. Please try again later.'
+      'name': 'Dreams API',
+      'error': 'Failed to fetch Dreams API application details. Please try again later.'
     }
   }
 };
 
 export const getApplication = async (appName: string, env: string) => {
-  if (appName === 'boss-ui') {
+  if (appName === 'dreams-api') {
     try {
       const response = await fetch('https://dreams-core.equitec.in/crm/buildinfo');
       const data = await response.json();
-      console.log('Fetched Boss UI data:', data);
+      console.log('Fetched Dreams API data:', data);
       return data;
     } catch (error) {
-      console.error('Error fetching Boss UI data:', error);
-      return Applications[appName]['dev'];;
+      console.error('Error fetching Dreams API data:', error);
+      return Applications[appName]['dev'];
     }
   }
   if (Applications[appName] && Applications[appName][env]) {
