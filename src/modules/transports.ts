@@ -232,7 +232,7 @@ export function setupMessageEndpoint(app: any) {
 
 async function handleError(error: any, res: Response) {
   const errorMessage = error.message || "An unexpected error occurred while processing the message";
-  res.status(200).type('text/plain').send(errorMessage);
+  streamMarkdownTextFromJson(JSON.stringify({error: errorMessage}), "I received error while processing user message, give a detailed possible reason of this error and suggest how this can be fixed", res);
 }
 
 async function sendMessages(transport: SSEServerTransport) {

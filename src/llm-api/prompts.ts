@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
-export const SystemPromptForJqlResponse: string = `You are a data converter. You are suppose to convert it as below requirements:
+export const SystemPromptForJqlResponse: string = `You are a data converter. Convert the provided data as per below requirements
 
 Requirements:
 - Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". 
@@ -26,7 +26,7 @@ export const SystemPromptForArray: string = `You are a data converter. Convert t
 
 export const SystemPromptForObject: string = `You are a data converter. Convert the provided JSON into a readable Markdown two column table with column header in proper case. During conversion, for true use Yes and for false use No, treat same for bool values. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". If the JSON is not an object, return "Sorry, I received a empty object".`;
 
-export const SystemPromptForText: string = `You are a data converter. Convert the provided JSON into a readable Markdown text. During conversion, for true use Yes and for false use No, treat same for bool values. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". If the JSON is not an object, return "Sorry, I received a empty object".`;
+export const SystemPromptForText: string = `You are a data converter. Convert the provided JSON into a readable Markdown text. During conversion, for true use Yes and for false use No, treat same for bool values. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-"`;
 
 export const SystemPromtForTool: string = `
   You are an AI tool router. Available tools are:
