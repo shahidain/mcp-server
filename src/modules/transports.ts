@@ -1,7 +1,7 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { Request, Response } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getToolToCall, streamMarkdownTableFromJson, streamResponseText, streamMarkdownTextFromJson, getJQL } from "../llm-api/llmTools.js";
+import { getToolToCall, streamMarkdownTableFromJson, streamResponseText, streamMarkdownTextFromJson, getJQL, saveExample } from "../llm-api/llmTools.js";
 import { SqlVendorService } from "../services/sqlVendorService.js";
 import { SqlUserService } from '../services/sqlUserService.js';
 import { SqlCommodityService } from "../services/sqlCommodityService.js";
@@ -100,7 +100,7 @@ export function setupMessageEndpoint(app: any) {
             const toolName = llmApiResponse?.tool;
             console.log(`Tool to call with format: ${toolName} - ${JSON.stringify(llmApiResponse)}`);
             
-            const format: DataFormat = llmApiResponse?.requested_format || DataFormat.MarkdownTable;
+            const format: DataFormat = llmApiResponse?.requested_format || DataFormat.MarkdownText;
             const searchQuery: string | null | undefined = llmApiResponse?.parameters?.query;
             const skip: number | undefined = llmApiResponse?.parameters?.skip;
             const limit: number | undefined = llmApiResponse?.parameters?.limit;
@@ -116,7 +116,6 @@ export function setupMessageEndpoint(app: any) {
             switch (toolName) {
               case "get-commodities":
                 const commodities = await commoditiesService.getPaginatedCommodities();
-                // Use streaming response instead of waiting for full response
                 return streamMarkdownTableFromJson(JSON.stringify(commodities), req.body.message, SystemPromptForArray, res, format);
                 
               case "get-commodity-by-id":
@@ -185,6 +184,7 @@ export function setupMessageEndpoint(app: any) {
                 const jiraIssues = await JiraService.searchIssues(jqlQuey);
                 const jiraIssueSearchResponse: JiraIssueSearchResponse[] = GetJiraIssueSearchResponse(jiraIssues);
                 const additionalMessage = `Here is the JIRA search result for your message, which I got by executing below JQL \n\n**${jqlQuey}**\n\n`;
+                saveExample(req.body.message, jqlQuey);
                 return streamMarkdownTableFromJson(JSON.stringify(jiraIssueSearchResponse), req.body.message, SystemPromptForJqlResponse, res, format, additionalMessage);
 
               case "create-jira-issue":

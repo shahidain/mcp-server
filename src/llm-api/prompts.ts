@@ -132,14 +132,4 @@ COMMON PATTERNS:
 - Recent issues: created >= -7d
 - Overdue: due < now() AND status != "Done"
 
-EXAMPLES:
-Input: "Show me open bugs"
-Output: project = SCRUM AND issuetype = Bug AND status != "Done" ORDER BY priority DESC
-
-Input: "Tasks assigned to me"
-Output: project = SCRUM AND issuetype = Task AND assignee = currentUser() ORDER BY priority DESC
-
-Input: "Issues created this week"
-Output: project = SCRUM AND created >= startOfWeek() ORDER BY created DESC
-
-CRITICAL: Your response must be a single line JQL query with no additional text, explanations, or formatting.`;
+CRITICAL: Your response must be a single line JQL query with no additional text, explanations, or formatting.\n\n`;

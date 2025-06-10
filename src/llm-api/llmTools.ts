@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 import { Response } from 'express';
 import { SystemPromtForTool, SystemPromptForChart, SystemPromptForText, SystemPromptForJQL } from './prompts.js';
 import { DataFormat } from '../utils/utilities.js';
-import { format } from 'path';
+import { OpenAIEmbeddings } from "@langchain/openai"
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { Document } from "langchain/document";
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -12,23 +14,36 @@ dotenv.config();
  * Configuration constants for LLM API access
  * Supports both OPENAI_API_KEY and LLM_API_KEY for flexibility
  */
-const API_KEY = process.env.LLM_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.LLM_MODEL;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
 // Log configuration status at startup
-if (!API_KEY) {
+if (!OPENAI_API_KEY) {
   console.error('ERROR: OpenAI API key not found in environment variables.');
   console.error('Please set OPENAI_API_KEY or LLM_API_KEY in your .env file.');
   console.error('AI-powered insights will not be available until this is configured.');
 } else {
   console.log(`LLM API initialized with model: ${MODEL}`);
-}
+};
+
+
+const embeddings = new OpenAIEmbeddings();
+const store = await MemoryVectorStore.fromTexts(
+  ["Show me open bugs", "Tasks assigned to me", "Issues created this week"],
+  [
+    { jql: 'project = SCRUM AND issuetype = Bug AND status != "Done" ORDER BY priority DESC' },
+    { jql: 'project = SCRUM AND issuetype = Task AND assignee = currentUser() ORDER BY priority DESC' },
+    { jql: 'project = SCRUM AND created >= startOfWeek() ORDER BY created DESC'}
+  ],
+  embeddings
+);
+console.log('Memory Vector Store initialized successfully');
 
 // Create OpenAI client instance with configuration
 const openai = new OpenAI({ 
-  apiKey: API_KEY,
+  apiKey: OPENAI_API_KEY,
   timeout: 30000, // 30 second timeout
   maxRetries: MAX_RETRIES
 });
@@ -110,7 +125,7 @@ async function streamWithRetry(config: any): Promise<any> {
  * @throws Error if API key is not configured
  */
 function validateApiKey(): void {
-  if (!API_KEY) {
+  if (!OPENAI_API_KEY) {
     throw new Error('OpenAI API key is not configured. Please add OPENAI_API_KEY to your .env file.');
   }
 }
@@ -123,10 +138,15 @@ export async function getJQL(userMessage: string): Promise<string> {
   }
   validateApiKey();
   try {
+    const smilarJqlExamples = await getJqlExamples(userMessage);
+    console.log('Retrieved similar JQL examples:', smilarJqlExamples);
+    const fewShotExamples = smilarJqlExamples.map((example: any) => `User: ${example.pageContent}\nJQL: ${example.metadata.jql}`).join('\n\n');
+    const promptForJql = `${SystemPromptForJQL}Examples:\n\n${fewShotExamples}`;
+    console.log('Prompt for JQL:', promptForJql);
     const config = {
       model: MODEL,
       messages: [
-        { role: 'system', content: SystemPromptForJQL },
+        { role: 'system', content: promptForJql },
         { role: 'user', content: userMessage }
       ],
       temperature: 0,
@@ -146,6 +166,18 @@ export async function getJQL(userMessage: string): Promise<string> {
     console.error('Error calling OpenAI API:', error);
     throw new Error(`Failed to process request with AI: ${error instanceof Error ? error.message : String(error)}`);
   }
+};
+
+
+export async function saveExample(prompt: string, jql: string) {
+  const document = new Document({ pageContent: prompt, metadata: { jql } });
+  await store.addDocuments([document]);
+  console.log('Example saved to JQL memory:', { prompt, jql });
+};
+
+async function getJqlExamples(prompt: string, k: number = 5): Promise<any[]> {
+  const results = await store.similaritySearch(prompt, k);
+  return results;
 };
 
 /**

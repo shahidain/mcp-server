@@ -12,7 +12,6 @@ import { registerJiraTools } from './controllers/jiraController.js';
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import { register } from 'module';
 
 /**
  * Main function to set up and run the MCP server
@@ -66,7 +65,7 @@ async function main() {
     
     setupSSEEndpoint(app, server);
     setupMessageEndpoint(app);
-    
+
     app.listen(4000, () => {
       console.log(`MCP server is running on port 4000`);
     });
@@ -75,7 +74,7 @@ async function main() {
     console.error('Error during MCP server initialization:', error);
     process.exit(1);
   }
-}
+};
 
 // Run the main function
 main().catch((error) => {
