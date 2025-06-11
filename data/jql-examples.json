@@ -1,18 +1,8 @@
 [
   {
-    "prompt": "draw sprint velocity bar chart of closed jira sprints",
+    "prompt": "draw all closed sprint velocity bar chart",
     "jql": "sprint in closedSprints() ORDER BY \"Sprint\"",
-    "timestamp": 1749611539925
-  },
-  {
-    "prompt": "get all jira closed sprints then draw a bar chart of sprint velocity",
-    "jql": "sprint in closedSprints() ORDER BY \"Sprint\"",
-    "timestamp": 1749611498357
-  },
-  {
-    "prompt": "get all jira closed sprints details order by 'Sprint'. then draw a bar chart of sprint velocity",
-    "jql": "sprint in closedSprints() ORDER BY \"Sprint\"",
-    "timestamp": 1749611433178
+    "timestamp": 1749612973435
   },
   {
     "prompt": "get all jira issues assigned to Shahidain, show records in markdown table",
@@ -20,19 +10,9 @@
     "timestamp": 1749609222675
   },
   {
-    "prompt": "get all jira issues assigned to Shahidain",
-    "jql": "assignee = \"Shahidain\" ORDER BY priority DESC, created DESC",
-    "timestamp": 1749609192093
-  },
-  {
     "prompt": "get details of active jira sprint, display records in markdown table format. do a deep analysis and present it in grouped bullet points",
     "jql": "project = SCRUM AND sprint in openSprints() ORDER BY priority DESC, created DESC",
     "timestamp": 1749609039277
-  },
-  {
-    "prompt": "get details of active jira sprint",
-    "jql": "project = SCRUM AND sprint in openSprints() ORDER BY priority DESC, created DESC",
-    "timestamp": 1749608625474
   },
   {
     "prompt": "Show me open bugs",

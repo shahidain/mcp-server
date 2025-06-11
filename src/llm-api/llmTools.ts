@@ -37,11 +37,11 @@ interface JQLExample {
 class PersistentJQLStore {
   private examples: JQLExample[] = [];
   private readonly filePath: string;
-
   constructor() {
     this.filePath = path.join(process.cwd(), 'data', 'jql-examples.json');
     this.ensureDataDirectory();
     this.loadExamples();
+    this.cleanupDuplicates(); // Clean up any existing duplicates on startup
   }
 
   private ensureDataDirectory(): void {
@@ -100,18 +100,29 @@ class PersistentJQLStore {
       console.error('Error saving JQL examples to file:', error);
     }
   }
-
   addExample(prompt: string, jql: string): void {
+    // Check if this example already exists (by prompt similarity or exact JQL match)
+    const existingExample = this.examples.find(example => {
+      // Check for exact JQL match
+      if (example.jql.trim().toLowerCase() === jql.trim().toLowerCase()) {
+        return true;
+      }
+      
+      // Check for very similar prompts (high similarity score)
+      const promptSimilarity = this.calculateSimilarity(example.prompt, prompt);
+      return promptSimilarity > 0.8; // 80% similarity threshold
+    });
+
+    if (existingExample) {
+      console.log(`Skipping duplicate JQL example - similar to existing: "${existingExample.prompt}"`);
+      return;
+    }
+
     const newExample: JQLExample = {
       prompt,
       jql,
       timestamp: Date.now()
     };
-    
-    // Remove duplicate if exists
-    this.examples = this.examples.filter(example => 
-      example.prompt.toLowerCase() !== prompt.toLowerCase()
-    );
     
     // Add new example at the beginning
     this.examples.unshift(newExample);
@@ -123,6 +134,21 @@ class PersistentJQLStore {
     
     // Immediately save to file to keep in sync
     this.saveToFile();
+    console.log(`Added new JQL example: "${prompt}"`);
+  }
+
+  private calculateSimilarity(str1: string, str2: string): number {
+    const words1 = str1.toLowerCase().split(' ').filter(word => word.length > 2);
+    const words2 = str2.toLowerCase().split(' ').filter(word => word.length > 2);
+    
+    if (words1.length === 0 && words2.length === 0) return 1;
+    if (words1.length === 0 || words2.length === 0) return 0;
+    
+    const commonWords = words1.filter(word => 
+      words2.some(word2 => word2.includes(word) || word.includes(word2))
+    );
+    
+    return commonWords.length / Math.max(words1.length, words2.length);
   }
 
   getSimilarExamples(prompt: string, limit: number = 5): JQLExample[] {
@@ -150,6 +176,33 @@ class PersistentJQLStore {
 
   getAllExamples(): JQLExample[] {
     return [...this.examples];
+  }
+
+  private cleanupDuplicates(): void {
+    const uniqueExamples: JQLExample[] = [];
+    
+    for (const example of this.examples) {
+      const isDuplicate = uniqueExamples.some(existing => {
+        // Check for exact JQL match
+        if (existing.jql.trim().toLowerCase() === example.jql.trim().toLowerCase()) {
+          return true;
+        }
+        
+        // Check for very similar prompts
+        const promptSimilarity = this.calculateSimilarity(existing.prompt, example.prompt);
+        return promptSimilarity > 0.8;
+      });
+      
+      if (!isDuplicate) {
+        uniqueExamples.push(example);
+      }
+    }
+    
+    if (uniqueExamples.length !== this.examples.length) {
+      console.log(`Cleaned up ${this.examples.length - uniqueExamples.length} duplicate JQL examples`);
+      this.examples = uniqueExamples;
+      this.saveToFile();
+    }
   }
 }
 
@@ -286,7 +339,6 @@ export async function getJQL(userMessage: string): Promise<string> {
 
 export async function saveExample(prompt: string, jql: string) {
   jqlStore.addExample(prompt, jql);
-  console.log('Example saved to JQL memory:', { prompt, jql });
 };
 
 /**
@@ -387,7 +439,7 @@ const setStreamingHeaders = (res: Response): void => {
 
 export async function streamResponseText(responseText: string, res: Response): Promise<void> {
   try {
-    
+
     // Set appropriate headers for streaming text
     setStreamingHeaders(res);
     // Write the response text in chunks
