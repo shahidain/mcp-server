@@ -3,9 +3,8 @@ import dotenv from 'dotenv';
 import { Response } from 'express';
 import { SystemPromtForTool, SystemPromptForChart, SystemPromptForText, SystemPromptForJQL } from './prompts.js';
 import { DataFormat } from '../utils/utilities.js';
-import { OpenAIEmbeddings } from "@langchain/openai"
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { Document } from "langchain/document";
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -26,20 +25,136 @@ if (!OPENAI_API_KEY) {
   console.error('AI-powered insights will not be available until this is configured.');
 } else {
   console.log(`LLM API initialized with model: ${MODEL}`);
-};
+}
 
+// JSON-based persistent storage for JQL examples
+interface JQLExample {
+  prompt: string;
+  jql: string;
+  timestamp: number;
+}
 
-const embeddings = new OpenAIEmbeddings();
-const store = await MemoryVectorStore.fromTexts(
-  ["Show me open bugs", "Tasks assigned to me", "Issues created this week"],
-  [
-    { jql: 'project = SCRUM AND issuetype = Bug AND status != "Done" ORDER BY priority DESC' },
-    { jql: 'project = SCRUM AND issuetype = Task AND assignee = currentUser() ORDER BY priority DESC' },
-    { jql: 'project = SCRUM AND created >= startOfWeek() ORDER BY created DESC'}
-  ],
-  embeddings
-);
-console.log('Memory Vector Store initialized successfully');
+class PersistentJQLStore {
+  private examples: JQLExample[] = [];
+  private readonly filePath: string;
+
+  constructor() {
+    this.filePath = path.join(process.cwd(), 'data', 'jql-examples.json');
+    this.ensureDataDirectory();
+    this.loadExamples();
+  }
+
+  private ensureDataDirectory(): void {
+    const dataDir = path.dirname(this.filePath);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  }
+
+  private loadExamples(): void {
+    try {
+      if (fs.existsSync(this.filePath)) {
+        const data = fs.readFileSync(this.filePath, 'utf8');
+        if (data.trim()) {
+          this.examples = JSON.parse(data);
+          console.log(`Loaded ${this.examples.length} JQL examples from persistent storage`);
+          return;
+        }
+      }
+      
+      // Initialize with default examples if file doesn't exist or is empty
+      console.log('Initializing JQL examples with default data');
+      this.initializeDefaultExamples();
+    } catch (error) {
+      console.error('Error loading JQL examples from file:', error);
+      this.initializeDefaultExamples();
+    }
+  }
+
+  private initializeDefaultExamples(): void {
+    this.examples = [
+      {
+        prompt: "Show me open bugs",
+        jql: 'project = SCRUM AND issuetype = Bug AND status != "Done" ORDER BY priority DESC',
+        timestamp: Date.now()
+      },
+      {
+        prompt: "Tasks assigned to me",
+        jql: 'project = SCRUM AND issuetype = Task AND assignee = currentUser() ORDER BY priority DESC',
+        timestamp: Date.now()
+      },
+      {
+        prompt: "Issues created this week",
+        jql: 'project = SCRUM AND created >= startOfWeek() ORDER BY created DESC',
+        timestamp: Date.now()
+      }
+    ];
+    this.saveToFile();
+  }
+
+  private saveToFile(): void {
+    try {
+      fs.writeFileSync(this.filePath, JSON.stringify(this.examples, null, 2), 'utf8');
+      console.log(`Saved ${this.examples.length} JQL examples to persistent storage`);
+    } catch (error) {
+      console.error('Error saving JQL examples to file:', error);
+    }
+  }
+
+  addExample(prompt: string, jql: string): void {
+    const newExample: JQLExample = {
+      prompt,
+      jql,
+      timestamp: Date.now()
+    };
+    
+    // Remove duplicate if exists
+    this.examples = this.examples.filter(example => 
+      example.prompt.toLowerCase() !== prompt.toLowerCase()
+    );
+    
+    // Add new example at the beginning
+    this.examples.unshift(newExample);
+    
+    // Keep only the most recent 50 examples to prevent file from growing too large
+    if (this.examples.length > 50) {
+      this.examples = this.examples.slice(0, 50);
+    }
+    
+    // Immediately save to file to keep in sync
+    this.saveToFile();
+  }
+
+  getSimilarExamples(prompt: string, limit: number = 5): JQLExample[] {
+    const queryWords = prompt.toLowerCase().split(' ').filter(word => word.length > 2);
+    
+    const scoredExamples = this.examples.map(example => {
+      const exampleWords = example.prompt.toLowerCase().split(' ');
+      const matchCount = queryWords.reduce((count, word) => {
+        return count + (exampleWords.some(exampleWord => 
+          exampleWord.includes(word) || word.includes(exampleWord)
+        ) ? 1 : 0);
+      }, 0);
+      
+      return {
+        ...example,
+        score: matchCount / queryWords.length
+      };
+    });
+
+    return scoredExamples
+      .filter(example => example.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  }
+
+  getAllExamples(): JQLExample[] {
+    return [...this.examples];
+  }
+}
+
+// Initialize the persistent JQL store
+const jqlStore = new PersistentJQLStore();
 
 // Create OpenAI client instance with configuration
 const openai = new OpenAI({ 
@@ -138,9 +253,9 @@ export async function getJQL(userMessage: string): Promise<string> {
   }
   validateApiKey();
   try {
-    const smilarJqlExamples = await getJqlExamples(userMessage);
-    console.log('Retrieved similar JQL examples:', smilarJqlExamples);
-    const fewShotExamples = smilarJqlExamples.map((example: any) => `User: ${example.pageContent}\nJQL: ${example.metadata.jql}`).join('\n\n');
+    const similarJqlExamples = jqlStore.getSimilarExamples(userMessage);
+    console.log('Retrieved similar JQL examples:', similarJqlExamples);
+    const fewShotExamples = similarJqlExamples.map(example => `User: ${example.prompt}\nJQL: ${example.jql}`).join('\n\n');
     const promptForJql = `${SystemPromptForJQL}Examples:\n\n${fewShotExamples}`;
     console.log('Prompt for JQL:', promptForJql);
     const config = {
@@ -170,14 +285,8 @@ export async function getJQL(userMessage: string): Promise<string> {
 
 
 export async function saveExample(prompt: string, jql: string) {
-  const document = new Document({ pageContent: prompt, metadata: { jql } });
-  await store.addDocuments([document]);
+  jqlStore.addExample(prompt, jql);
   console.log('Example saved to JQL memory:', { prompt, jql });
-};
-
-async function getJqlExamples(prompt: string, k: number = 5): Promise<any[]> {
-  const results = await store.similaritySearch(prompt, k);
-  return results;
 };
 
 /**
@@ -266,15 +375,21 @@ export async function getMarkdownTableFromJson(inputJson: string, userPrompt: st
   return content;
 }
 
+const setStreamingHeaders = (res: Response): void => {
+  // Set appropriate headers for streaming text
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Transfer-Encoding', 'chunked');
+  res.setHeader('connection', 'keep-alive');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.flushHeaders();
+    
+}
+
 export async function streamResponseText(responseText: string, res: Response): Promise<void> {
   try {
-    // Set appropriate headers for streaming text
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Transfer-Encoding', 'chunked');
-    res.setHeader('connection', 'keep-alive');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.flushHeaders();
     
+    // Set appropriate headers for streaming text
+    setStreamingHeaders(res);
     // Write the response text in chunks
     const words = responseText.split(' ');
     const chunkSize = 3; // Number of words per chunk
@@ -323,12 +438,8 @@ export async function streamMarkdownTextFromJson(inputJson: string,
       };
       
       // Set appropriate headers for streaming text
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Transfer-Encoding', 'chunked');
-      res.setHeader('connection', 'keep-alive');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.flushHeaders();
-      
+      setStreamingHeaders(res);
+
       // Create streaming response
       const stream = await streamWithRetry(config);
       
@@ -406,11 +517,7 @@ export async function streamMarkdownTableFromJson(
       return;
     }
     // Set appropriate headers for streaming text
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Transfer-Encoding', 'chunked');
-    res.setHeader('connection', 'keep-alive');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.flushHeaders();
+    setStreamingHeaders(res);
     
     // Create streaming response
     const stream = await streamWithRetry(config);

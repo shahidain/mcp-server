@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
-export const SystemPromptForJqlResponse: string = `You are a data converter. Convert the provided data as per below requirements
+export const SystemPromptForJqlResponse: string = `You are a data converter. Convert the provided data into a readable Markdown table and as per below requirements
 
 Requirements:
 - Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". 

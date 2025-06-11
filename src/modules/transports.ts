@@ -18,7 +18,7 @@ const roleService = new SqlRoleService();
 
 import { DataFormat, GetJiraIssueSearchResponse } from "../utils/utilities.js";
 import { JiraIssue, JiraIssueSearchResponse } from "../models/jira.js";
-import { getApplication } from "../data/applications.js";
+import { getApplication } from "../app-data/applications.js";
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
   // Create an initial response endpoint that returns JSON right away with session ID
