@@ -52,9 +52,9 @@ export function registerJiraTools(server: McpServer) {
 
   server.tool(
     'search-jira-issues',
-    'Run a custom Jira query to search for issues',
+    'Run a custom Jira JQL query to search for issues',
     {
-      query: z.string().describe('The search query string to filter Jira issues')
+      query: z.string().describe('The Jira JQL query string to filter Jira issues')
     },
     async ({ query }) => {
       try {
