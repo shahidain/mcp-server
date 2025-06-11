@@ -348,74 +348,74 @@ sequenceDiagram
 
 ```
 MCP-SERVER/
-├── 📁 data/                           # 💾 Persistent Data Storage
-│   └── 📄 jql-examples.json          # 🎯 JQL examples with smart deduplication
+├── 📁 data/                          # 💾 Persistent Data Storage
+│   └── 📄 ...                        # 📄 Configuration files
 │
-├── 📁 src/                            # 💻 Source Code
-│   ├── 📄 index.ts                   # 🚀 Main server entry point
+├── 📁 src/                           # 💻 Source Code
+│   ├── 📄 ...                        # 📄 TypeScript files
 │   │
 │   ├── 📁 app-data/                  # 📊 Application Data
-│   │   └── 📄 applications.ts        # 🖥️ Application configuration data
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 config/                    # ⚙️ Configuration Files
-│   │   ├── 📄 apiConfig.ts          # 🌐 External API configurations
-│   │   ├── 📄 db.ts                 # 🔗 Database connection setup
-│   │   ├── 📄 dbSchemaCheck.ts      # ✅ Database schema validation
-│   │   └── 📄 mssqlConfig.ts        # 🗄️ SQL Server specific config
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 controllers/               # 🎮 MCP Tool Controllers
-│   │   ├── 📄 commodityController.ts # 📊 Commodity management tools
-│   │   ├── 📄 currencyController.ts  # 💰 Currency management tools
-│   │   ├── 📄 jiraController.ts      # 🎫 Jira integration tools
-│   │   ├── 📄 productController.ts   # 📦 Product data tools
-│   │   ├── 📄 roleController.ts      # 🔐 Role management tools
-│   │   ├── 📄 userController.ts      # 👥 User management tools
-│   │   └── 📄 vendorController.ts    # 🏪 Vendor management tools
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 db-models/                 # 🗃️ Database Models
-│   │   ├── 📄 commodity.ts          # 📊 Commodity table interface
-│   │   ├── 📄 currency.ts           # 💰 Currency table interface
-│   │   ├── 📄 role.ts               # 🔐 Role table interface
-│   │   ├── 📄 user.ts               # 👥 User table interface
-│   │   └── 📄 vendor.ts             # 🏪 Vendor table interface
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 llm-api/                   # 🤖 AI Integration
-│   │   ├── 📄 llmTools.ts           # 🧠 OpenAI API integration & JQL learning
-│   │   └── 📄 prompts.ts            # 📝 AI system prompts & templates
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 models/                    # 📋 Data Models
-│   │   ├── 📄 jira.ts               # 🎫 Jira API response models
-│   │   ├── 📄 product.ts            # 📦 DummyJSON product models
-│   │   └── 📄 user.ts               # 👥 DummyJSON user models
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 modules/                   # 🔧 Core Server Modules
-│   │   └── 📄 transports.ts         # 🌐 SSE transport & message routing
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 services/                  # 🏢 Business Logic Services
-│   │   ├── 📄 jiraService.ts        # 🎫 Jira API service
-│   │   ├── 📄 productService.ts     # 📦 DummyJSON product service
-│   │   ├── 📄 sqlCommodityService.ts # 📊 SQL commodity operations
-│   │   ├── 📄 sqlCurrencyService.ts  # 💰 SQL currency operations
-│   │   ├── 📄 sqlRoleService.ts      # 🔐 SQL role operations
-│   │   ├── 📄 sqlUserService.ts      # 👥 SQL user operations
-│   │   ├── 📄 sqlVendorService.ts    # 🏪 SQL vendor operations
-│   │   └── 📄 userService.ts         # 👥 DummyJSON user service
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   ├── 📁 types/                     # 📝 TypeScript Definitions
-│   │   ├── 📄 global.d.ts           # 🌍 Global type definitions
-│   │   └── 📄 tedious-fixes.d.ts    # 🔧 SQL Server driver type fixes
+│   │   ├── 📄 ...                    # 📄 TypeScript files
+│   │   └── 📄 ...                    # 📄 TypeScript files
 │   │
 │   └── 📁 utils/                     # 🛠️ Utility Functions
-│       └── 📄 utilities.ts          # 🔧 Common helper functions
+│       └── 📄 ...                    # 📄 TypeScript files
 │
 ├── 📁 scripts/                       # 🔨 Build & Deployment
-│   └── 📄 copyEnvFile.js            # 📋 Environment file copy script
+│   └── 📄 ...                        # 📄 JavaScript files
 │
-├── 📄 commodities-table.html         # 📊 Sample HTML output
-├── 📄 package.json                   # 📦 Dependencies & scripts
-├── 📄 package.vscode.json            # 🆚 VS Code specific config
-├── 📄 tsconfig.json                  # ⚙️ TypeScript configuration
-└── 📄 README.md                      # 📖 This documentation
+├── 📄 ...                            # 📄 HTML files
+├── 📄 ...                            # 📄 Configuration files
+├── 📄 ...                            # 📄 Configuration files
+├── 📄 ...                            # 📄 Configuration files
+└── 📄 ...                            # 📄 Documentation files
 ```
 
 ### 🔀 Component Interaction Map

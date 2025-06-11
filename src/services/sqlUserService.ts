@@ -21,7 +21,7 @@ export class SqlUserService {
             console.error('Error in getPaginatedUsers:', error);
             throw error;
         }
-    }
+    };
 
     async getUserById(id: number): Promise<User | null> {
         try {
@@ -40,7 +40,7 @@ export class SqlUserService {
             console.error('Error in getUserById:', error);
             throw error;
         }
-    }
+    };
 
     async searchUsers(query: string | null | undefined): Promise<User[]> {
         try {
@@ -63,5 +63,27 @@ export class SqlUserService {
             console.error('Error in searchUsers:', error);
             throw error;
         }
-    }
+    };
+
+    async addUser(user: User): Promise<User> {
+        try {
+            const pool = await getPool();
+            const request = new sql.Request(pool);
+
+            request.input('Name', sql.VarChar, user.Name);
+            request.input('Email', sql.VarChar, user.Email);
+            request.input('Username', sql.VarChar, user.Username);
+            request.input('RoleId', sql.Int, user.RoleId);
+
+            const result = await request.query(
+                `INSERT INTO Users (Name, Email, Username, Password, RoleId) 
+                 OUTPUT INSERTED.* 
+                 VALUES (@Name, @Email, @Username, @Password, @RoleId)`
+            );
+            return result.recordset[0];
+        } catch (error) {
+            console.error('Error in addUser:', error);
+            throw error;
+        }
+    };
 }
