@@ -2,24 +2,29 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const linkPattern = `${process.env.JIRA_PROJECT_URL}browse/<KEY>`;
-export const SystemPromptForJqlResponse: string = `You are a data converter. Convert the provided data into a readable Markdown table and as per below requirements
+export const SystemPromptForJqlResponse: string = `You are a data converter. You are suppose to convert below JQL output JSON as below requirements:
 
 Requirements:
 - Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". 
-- Show all fields unless user requested to exclude or condition fulfilled to exclude.
 - Make sure the number of header columns exactly matches the number of data columns.
 - Ensure to create a hyperlink on 'key' field with format like ${linkPattern}
-- Date fields should be formatted as "DD-MM-YY hh:mm AM/PM" of 'Asia/Kolkata' timezone in the output table.
-- Do not add or guess any values that are not present in the original JSON.
+- All links in table should open in new tab.
+- Date fields should be formatted as "DD-MM-YY hh:mm AM/PM" for IST zone in the output table.
 - Exclude fields if requested by user.
 - null or (null) value should be represented as ''
-- Use small icons and status text both for different status e.g. for In Progress icon is 🚧, Done icon is ✅ and To Do icon is ⚪).
+- Use small 'icons and status text both' for different status e.g. for In Progress icon is 🚧, Done icon is ✅ and To Do icon is ⚪).
 - Provide detailed summary of each record in well formatted markdown text
-- Do not show horizontal line just after table
 - If flagged field is not null then ensure to show small red color 'flag' icon 🚩 along with field value. 
 - If there is no row with flagged field then do not show flagged column in table.
 - Give deep detailed analysis of data in analysis key bullet points and markdown format, groupped properly
-- Always sum up all story points for sprint velocity`;
+- Provide analysis of data in analysis key bullet points and markdown format under heading Data Analysis, groupped properly
+
+NOT TO DO:
+- Do not add any additional text or explanations outside the table.
+- Do not use any code blocks or formatting other than Markdown table.
+- Do not include any empty rows or columns in the table.\
+- Do not show Link column in table.
+- Do not add or guess any values that are not present in the original JSON.`;
 
 
 export const SystemPromptForArray: string = `You are a data converter. Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". null or (null) value should be represented as dash "-". Make sure the number of header columns exactly matches the number of data columns.`;

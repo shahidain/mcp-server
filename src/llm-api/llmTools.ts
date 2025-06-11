@@ -545,13 +545,12 @@ export async function streamMarkdownTableFromJson(
     if (!MODEL) {
       throw new Error('OpenAI model is not configured');
     }
-    
+
     const config = {
       model: MODEL as string,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: inputJson },
-        { role: 'user', content: userPrompt }
+        { role: 'user', content: `${inputJson}\n\n${userPrompt}` }
       ],
       temperature: 0,
       stream: true

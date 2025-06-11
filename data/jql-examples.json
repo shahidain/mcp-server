@@ -1,5 +1,35 @@
 [
   {
+    "prompt": "give all members present in all sprints",
+    "jql": "project = SCRUM AND sprint in openSprints() OR sprint in closedSprints() ORDER BY priority DESC, created DESC",
+    "timestamp": 1749654633482
+  },
+  {
+    "prompt": "get all Jira Epic and details of each one in table format",
+    "jql": "project = SCRUM AND issuetype = Epic ORDER BY priority DESC, created DESC",
+    "timestamp": 1749654449807
+  },
+  {
+    "prompt": "find all jira issues assigned to Ankit",
+    "jql": "assignee = \"Ankit\" ORDER BY priority DESC, created DESC",
+    "timestamp": 1749654129859
+  },
+  {
+    "prompt": "get all jira closed sprints sprint and total story points then draw a bar chart",
+    "jql": "sprint in closedSprints() AND issuetype = Story ORDER BY sprint, created DESC",
+    "timestamp": 1749653813817
+  },
+  {
+    "prompt": "get all jira closed sprints sprint and total story points in table format keep default order",
+    "jql": "sprint in closedSprints() AND issuetype = Story ORDER BY priority DESC, created DESC",
+    "timestamp": 1749650180517
+  },
+  {
+    "prompt": "get current jira sprint details, present data in table format and do a detailed analysis and present findings in grouped bullet points. also suggest areas of improvement",
+    "jql": "sprint in openSprints() ORDER BY priority DESC, created DESC",
+    "timestamp": 1749648334593
+  },
+  {
     "prompt": "draw all closed sprint velocity bar chart",
     "jql": "sprint in closedSprints() ORDER BY \"Sprint\"",
     "timestamp": 1749612973435
