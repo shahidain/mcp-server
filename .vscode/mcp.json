@@ -3,8 +3,437 @@
     {
       "type": "sse",
       "name": "Sample MCP Server",
-      "description": "A sample server for the Model Context Protocol (MCP) that provides SQL database services.",
-      "url": "http://localhost:4000/sse/stream"
+      "description": "A comprehensive MCP server providing SQL database services, Jira integration, product management, and AI-powered data processing.",
+      "url": "http://localhost:4000/sse/stream",
+      "tools": [
+        {
+          "name": "get-users",
+          "description": "Get a list of users with optional pagination",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "Maximum number of users to return (1-100)"
+              },
+              "skip": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Number of users to skip for pagination"
+              }
+            }
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract pagination parameters and return as JSON: { \"limit\": number, \"skip\": number }"
+        },
+        {
+          "name": "get-user-by-id",
+          "description": "Get detailed information about a specific user by its ID",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "minimum": 1,
+                "description": "The user ID to fetch"
+              }
+            },
+            "required": ["id"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the user ID and return as JSON: { \"id\": number }"
+        },
+        {
+          "name": "search-users",
+          "description": "Search for users by keyword",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Search term to find users"
+              }
+            },
+            "required": ["query"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the search term and return as JSON: { \"query\": \"search_term\" }"
+        },
+        {
+          "name": "get-vendors",
+          "description": "Get a list of vendors with optional pagination",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "Maximum number of vendors to return (1-100)"
+              },
+              "skip": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Number of vendors to skip for pagination"
+              }
+            }
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract pagination parameters and return as JSON: { \"limit\": number, \"skip\": number }"
+        },
+        {
+          "name": "get-vendor-by-id",
+          "description": "Get detailed information about a specific vendor by its ID",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "minimum": 1,
+                "description": "The vendor ID to fetch"
+              }
+            },
+            "required": ["id"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the vendor ID and return as JSON: { \"id\": number }"
+        },
+        {
+          "name": "search-vendors",
+          "description": "Search for vendors by keyword",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Search term to find vendors"
+              }
+            },
+            "required": ["query"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the search term and return as JSON: { \"query\": \"search_term\" }"
+        },
+        {
+          "name": "get-commodities",
+          "description": "Get a list of commodities with optional pagination",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "Maximum number of commodities to return (1-100)"
+              },
+              "skip": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Number of commodities to skip for pagination"
+              }
+            }
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract pagination parameters and return as JSON: { \"limit\": number, \"skip\": number }"
+        },
+        {
+          "name": "get-commodity-by-id",
+          "description": "Get detailed information about a specific commodity by its ID",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "minimum": 1,
+                "description": "The commodity ID to fetch"
+              }
+            },
+            "required": ["id"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the commodity ID and return as JSON: { \"id\": number }"
+        },
+        {
+          "name": "search-commodities",
+          "description": "Search for commodities by keyword",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Search term to find commodities"
+              }
+            },
+            "required": ["query"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the search term and return as JSON: { \"query\": \"search_term\" }"
+        },
+        {
+          "name": "get-currencies",
+          "description": "Get a list of currencies with optional pagination",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "Maximum number of currencies to return (1-100)"
+              },
+              "skip": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Number of currencies to skip for pagination"
+              }
+            }
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract pagination parameters and return as JSON: { \"limit\": number, \"skip\": number }"
+        },
+        {
+          "name": "get-currency-by-id",
+          "description": "Get detailed information about a specific currency by its ID",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "minimum": 1,
+                "description": "The currency ID to fetch"
+              }
+            },
+            "required": ["id"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the currency ID and return as JSON: { \"id\": number }"
+        },
+        {
+          "name": "search-currencies",
+          "description": "Search for currencies by keyword",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Search term to find currencies"
+              }
+            },
+            "required": ["query"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the search term and return as JSON: { \"query\": \"search_term\" }"
+        },
+        {
+          "name": "get-roles",
+          "description": "Get a list of roles with optional pagination",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "Maximum number of roles to return (1-100)"
+              },
+              "skip": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Number of roles to skip for pagination"
+              }
+            }
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract pagination parameters and return as JSON: { \"limit\": number, \"skip\": number }"
+        },
+        {
+          "name": "get-role-by-id",
+          "description": "Get detailed information about a specific role by its ID",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "minimum": 1,
+                "description": "The role ID to fetch"
+              }
+            },
+            "required": ["id"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the role ID and return as JSON: { \"id\": number }"
+        },
+        {
+          "name": "search-roles",
+          "description": "Search for roles by keyword",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Search term to find roles"
+              }
+            },
+            "required": ["query"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the search term and return as JSON: { \"query\": \"search_term\" }"
+        },
+        {
+          "name": "get-products",
+          "description": "Get a list of products with optional pagination",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "Maximum number of products to return (1-100)"
+              },
+              "skip": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Number of products to skip for pagination"
+              }
+            }
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract pagination parameters and return as JSON: { \"limit\": number, \"skip\": number }"
+        },
+        {
+          "name": "get-product-by-id",
+          "description": "Get detailed information about a specific product by its ID",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "minimum": 1,
+                "description": "The product ID to fetch"
+              }
+            },
+            "required": ["id"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the product ID and return as JSON: { \"id\": number }"
+        },
+        {
+          "name": "search-products",
+          "description": "Search for products by keyword",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Search term to find products"
+              }
+            },
+            "required": ["query"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the search term and return as JSON: { \"query\": \"search_term\" }"
+        },
+        {
+          "name": "get-products-by-category",
+          "description": "Get all products in a specific category",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Product category name"
+              }
+            },
+            "required": ["category"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the category name and return as JSON: { \"category\": \"category_name\" }"
+        },
+        {
+          "name": "get-categories",
+          "description": "Get a list of all product categories",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {}
+          },
+          "promptTemplate": "No parameters needed for listing all categories: {}"
+        },
+        {
+          "name": "get-jira-issue-by-id",
+          "description": "Get detailed information about a specific Jira issue by its ID",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The Jira issue ID to fetch"
+              }
+            },
+            "required": ["id"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract the Jira issue ID and return as JSON: { \"id\": \"issue_id\" }"
+        },
+        {
+          "name": "search-jira-issues",
+          "description": "Run a custom Jira JQL query to search for issues",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "The Jira JQL query string to filter Jira issues"
+              }
+            },
+            "required": ["query"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', generate a JQL query and return as JSON: { \"query\": \"jql_query_string\" }"
+        },
+        {
+          "name": "create-jira-issue",
+          "description": "Create a new Jira issue with the provided data",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "project": {
+                "type": "string",
+                "description": "The Jira project key for the new issue"
+              },
+              "summary": {
+                "type": "string",
+                "description": "The summary of the new Jira issue"
+              },
+              "issuetype": {
+                "type": "string",
+                "description": "The type of the issue to be created"
+              },
+              "description": {
+                "type": "string",
+                "description": "The description of the new Jira issue"
+              }
+            },
+            "required": ["project", "summary", "issuetype"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract Jira issue details and return as JSON: { \"project\": \"project_key\", \"summary\": \"issue_summary\", \"issuetype\": \"issue_type\", \"description\": \"issue_description\" }"
+        },
+        {
+          "name": "create-jira-subtask",
+          "description": "Create a sub-task for a given Jira issue",
+          "paramsSchema": {
+            "type": "object",
+            "properties": {
+              "project": {
+                "type": "string",
+                "description": "The Jira project key where the sub-task will be created"
+              },
+              "parentId": {
+                "type": "string",
+                "description": "The ID of the parent Jira issue"
+              },
+              "summary": {
+                "type": "string",
+                "description": "The summary of the sub-task"
+              },
+              "description": {
+                "type": "string",
+                "description": "The description of the sub-task"
+              }
+            },
+            "required": ["project", "parentId", "summary"]
+          },
+          "promptTemplate": "Given the user's input '{{input}}', extract sub-task details and return as JSON: { \"project\": \"project_key\", \"parentId\": \"parent_issue_id\", \"summary\": \"subtask_summary\", \"description\": \"subtask_description\" }"
+        }
+      ]
     }
   ]
 }
