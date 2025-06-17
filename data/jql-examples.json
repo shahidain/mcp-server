@@ -1,5 +1,10 @@
 [
   {
+    "prompt": "get all stories of active sprint",
+    "jql": "project = SCRUM AND issuetype = Story AND sprint in openSprints() ORDER BY priority DESC, created DESC",
+    "timestamp": 1749815412841
+  },
+  {
     "prompt": "get all closed sprints and then create a velocity line chart, do a well detailed analysis",
     "jql": "sprint in closedSprints() ORDER BY priority DESC, created DESC",
     "timestamp": 1749655937152

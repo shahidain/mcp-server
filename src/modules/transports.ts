@@ -156,7 +156,7 @@ export function setupMessageEndpoint(app: any) {
 
               case "get-vendor-by-id":
                 const vendor = await vendorService.getVendorById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(vendor), req.body.message, SystemPromptForObject, res, format);
+                return streamMarkdownTextFromJson(JSON.stringify(vendor), req.body.message, res);
 
               case "search-vendors":
                 const searchVendors = await vendorService.searchVendors(searchQuery);
