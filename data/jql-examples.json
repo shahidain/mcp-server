@@ -1,5 +1,20 @@
 [
   {
+    "prompt": "get all jira stories having parent 'SCRUM-4' and then draw a bar chart of 'story' and 'story point'",
+    "jql": "issuetype = Story AND parent = \"SCRUM-4\" ORDER BY priority DESC, created DESC",
+    "timestamp": 1749724147178
+  },
+  {
+    "prompt": "get all jira stories having parent 'SCRUM-4' and then do a detailed analysis. do present your findings in bullet points, keep them grouped appropriately",
+    "jql": "parent = \"SCRUM-4\" AND issuetype = Story ORDER BY priority DESC, created DESC",
+    "timestamp": 1749724020585
+  },
+  {
+    "prompt": "get all jira stories assigned to Shahidain",
+    "jql": "project = SCRUM AND issuetype = Story AND assignee = \"Shahidain\" ORDER BY priority DESC, created DESC",
+    "timestamp": 1749707554246
+  },
+  {
     "prompt": "get all stories of active sprint",
     "jql": "project = SCRUM AND issuetype = Story AND sprint in openSprints() ORDER BY priority DESC, created DESC",
     "timestamp": 1749815412841

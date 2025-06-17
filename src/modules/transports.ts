@@ -163,12 +163,12 @@ export function setupMessageEndpoint(app: any) {
                 return streamMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message, SystemPromptForArray, res, format);
 
               case "get-products":
-              const products = await ProductService.getProducts(limit, skip);
-              return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, SystemPromptForArray, res, format);
+                const products = await ProductService.getProducts(limit, skip);
+                return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, SystemPromptForArray, res, format);
 
               case "get-product-by-id":
-              const product = await ProductService.getProductById(id);
-              return streamMarkdownTextFromJson(JSON.stringify(product), req.body.message, res);
+                const product = await ProductService.getProductById(id);
+                return streamMarkdownTextFromJson(JSON.stringify(product), req.body.message, res);
 
               case "search-products":
                 const searchProducts = await ProductService.searchProducts(searchQuery);
@@ -193,7 +193,6 @@ export function setupMessageEndpoint(app: any) {
                   `Created JIRA issue with key: **${createdJiraIssue?.key}**`);
 
               case "create-jira-subtask":
-                
                 const createdSubtask: JiraIssue | undefined = await JiraService.createSubTask(project, parentId, summary, description);
                 return res.status(200).type('text/plain').send(
                   `Created JIRA subtask with key: **${createdSubtask?.key}** under parent issue: **${parentId}**`);
