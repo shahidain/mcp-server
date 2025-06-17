@@ -1,5 +1,10 @@
 [
   {
+    "prompt": "get details of sprint 'SCRUM Sprint 10'",
+    "jql": "sprint = \"SCRUM Sprint 10\" ORDER BY priority DESC, created DESC",
+    "timestamp": 1750167991901
+  },
+  {
     "prompt": "get all jira stories having parent 'SCRUM-4' and then draw a bar chart of 'story' and 'story point'",
     "jql": "issuetype = Story AND parent = \"SCRUM-4\" ORDER BY priority DESC, created DESC",
     "timestamp": 1749724147178

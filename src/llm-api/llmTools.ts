@@ -307,10 +307,15 @@ export async function getJQL(userMessage: string): Promise<string> {
   validateApiKey();
   try {
     const similarJqlExamples = jqlStore.getSimilarExamples(userMessage);
-    console.log('Retrieved similar JQL examples:', similarJqlExamples);
+    // If similar examples are found then return JQL query from the first example rather using OpenAI
+    if (similarJqlExamples.length > 0) {
+      console.info(`Found ${similarJqlExamples.length} similar JQL examples for user message: "${userMessage}"`);
+      return similarJqlExamples[0].jql;
+    }
+    console.info('Retrieved similar JQL examples:', similarJqlExamples);
     const fewShotExamples = similarJqlExamples.map(example => `User: ${example.prompt}\nJQL: ${example.jql}`).join('\n\n');
     const promptForJql = `${SystemPromptForJQL}Examples:\n\n${fewShotExamples}`;
-    console.log('Prompt for JQL:', promptForJql);
+    console.info('Prompt for JQL:', promptForJql);
     const config = {
       model: MODEL,
       messages: [
