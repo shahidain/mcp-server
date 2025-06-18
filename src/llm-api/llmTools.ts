@@ -305,10 +305,10 @@ export class OpenAILLMService implements ILLMService {
     try {
       const similarJqlExamples = this.jqlStore.getSimilarExamples(userMessage, 7);
       
-      /*if (similarJqlExamples.length > 0) {
+      if (similarJqlExamples.length > 0) {
         console.info(`Found ${similarJqlExamples.length} similar JQL examples for user message: "${userMessage}"`);
         return similarJqlExamples[0].jql;
-      }*/
+      };
 
       console.info('Retrieved similar JQL examples:', similarJqlExamples);
       const fewShotExamples = similarJqlExamples.map(example => `User: ${example.prompt}\nJQL: ${example.jql}`).join('\n\n');
