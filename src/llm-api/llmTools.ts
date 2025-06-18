@@ -108,10 +108,9 @@ class PersistentJQLStore {
       if (example.jql.trim().toLowerCase() === jql.trim().toLowerCase()) {
         return true;
       }
-      
-      // Check for very similar prompts (high similarity score)
+        // Check for very similar prompts (high similarity score)
       const promptSimilarity = this.calculateSimilarity(example.prompt, prompt);
-      return promptSimilarity > 0.8; // 80% similarity threshold
+      return promptSimilarity > 0.95; // 95% similarity threshold
     });
 
     if (existingExample) {
@@ -167,13 +166,12 @@ class PersistentJQLStore {
         ...example,
         score: matchCount / queryWords.length
       };
-    });
-
+    });    
     return scoredExamples
-      .filter(example => example.score > 0)
+      .filter(example => example.score >= 0.95)
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
-  }
+  };
 
   getAllExamples(): JQLExample[] {
     return [...this.examples];
@@ -188,10 +186,9 @@ class PersistentJQLStore {
         if (existing.jql.trim().toLowerCase() === example.jql.trim().toLowerCase()) {
           return true;
         }
-        
-        // Check for very similar prompts
+          // Check for very similar prompts
         const promptSimilarity = this.calculateSimilarity(existing.prompt, example.prompt);
-        return promptSimilarity > 0.8;
+        return promptSimilarity > 0.95;
       });
       
       if (!isDuplicate) {
@@ -306,11 +303,12 @@ export class OpenAILLMService implements ILLMService {
     }
 
     try {
-      const similarJqlExamples = this.jqlStore.getSimilarExamples(userMessage);
-      if (similarJqlExamples.length > 0) {
+      const similarJqlExamples = this.jqlStore.getSimilarExamples(userMessage, 7);
+      
+      /*if (similarJqlExamples.length > 0) {
         console.info(`Found ${similarJqlExamples.length} similar JQL examples for user message: "${userMessage}"`);
         return similarJqlExamples[0].jql;
-      }
+      }*/
 
       console.info('Retrieved similar JQL examples:', similarJqlExamples);
       const fewShotExamples = similarJqlExamples.map(example => `User: ${example.prompt}\nJQL: ${example.jql}`).join('\n\n');

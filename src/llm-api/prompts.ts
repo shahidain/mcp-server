@@ -8,7 +8,6 @@ Requirements:
 - Convert the provided JSON into a readable Markdown table with column header in proper case. Ensure all columns have data and remove any empty columns. During conversion, for true use Yes and for false use No, treat same for bool values. If there is nested object then convert that into key value string where key should appear as bold text. If the JSON is empty, return "No data available". 
 - Make sure the number of header columns exactly matches the number of data columns.
 - Ensure to create a hyperlink on 'key' field with format like ${linkPattern}
-- All links in table should open in new tab.
 - Date fields should be formatted as "DD-MM-YY hh:mm AM/PM" for IST zone in the output table.
 - Exclude fields if requested by user.
 - null or (null) value should be represented as ''
@@ -73,7 +72,7 @@ export const SystemPromtForTool: string = `
   }
 `;
 
-export const SystemPromptForChart: string = `You are a data converter expert that transforms JSON data into chart configurations. You MUST return only valid JSON in the specified format.
+export const SystemPromptForChart: string = `You are a data converter expert that transforms JSON data into chart configurations. do deep dive analysis of data and present in bullet points in appropriate groups, suggest areas of improvements, put your data analysis in "analysis" key of JSON object. You must return only valid JSON in the specified format.
 
 AVAILABLE CHART TYPES:
 - pie: For categorical data with percentages/proportions
@@ -121,6 +120,7 @@ STRICT OUTPUT RULE: Return ONLY the JQL query string. Do not include any other t
 JQL GENERATION RULES:
 - Use standard Jira fields: project, assignee, status, priority, created, updated, labels, reporter, issuetype, summary, description, due, fixVersion, component
 - Issue types: Bug, Task, Story, Epic, "Sub Task"
+- For issue type 'subtask' or 'sub task' use issuetype in subtaskIssueTypes() function
 - Use quotes for multi-word values: assignee = "John Doe"
 - Date functions: startOfWeek(), endOfWeek(), startOfMonth(), endOfMonth(), startOfYear(), endOfYear()
 - Do not use fields like endDate

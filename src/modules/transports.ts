@@ -146,7 +146,7 @@ export function setupMessageEndpoint(app: any) {
 
               case "get-user-by-id":
                 const user = await userService.getUserById(id);
-                return llmService.streamMarkdownTableFromJson(JSON.stringify(user), req.body.message, SystemPromptForObject, res, format);
+                return llmService.streamMarkdownTextFromJson(JSON.stringify(user), req.body.message, res);
 
               case "search-users":
                 const searchUsers = await userService.searchUsers(searchQuery);
