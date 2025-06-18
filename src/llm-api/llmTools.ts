@@ -147,26 +147,42 @@ class PersistentJQLStore {
     const commonWords = words1.filter(word => 
       words2.some(word2 => word2.includes(word) || word.includes(word2))
     );
-    
-    return commonWords.length / Math.max(words1.length, words2.length);
+      return commonWords.length / Math.max(words1.length, words2.length);
   }
 
+  private calculatePromptMatch(prompt: string, jql: string): number {
+    const normalize = (text: string) =>
+      text.toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\s+/).filter(Boolean);
+
+    const promptWords = new Set(normalize(prompt));
+    const jqlWords = new Set(normalize(jql));
+
+    let commonCount = 0;
+    for (const word of promptWords) {
+      if (jqlWords.has(word)) {
+        commonCount++;
+      }
+    }
+
+    const matchPercent = (commonCount / promptWords.size) * 100;
+    return Math.round(matchPercent);
+  };
+
   getSimilarExamples(prompt: string, limit: number = 5): JQLExample[] {
-    const queryWords = prompt.toLowerCase().split(' ').filter(word => word.length > 2);
-    
     const scoredExamples = this.examples.map(example => {
-      const exampleWords = example.prompt.toLowerCase().split(' ');
-      const matchCount = queryWords.reduce((count, word) => {
-        return count + (exampleWords.some(exampleWord => 
-          exampleWord.includes(word) || word.includes(exampleWord)
-        ) ? 1 : 0);
-      }, 0);
+      // Use the new prompt matching algorithm
+      const promptScore = this.calculatePromptMatch(prompt, example.prompt);
+      const jqlScore = this.calculatePromptMatch(prompt, example.jql);
+      
+      // Take the higher score between prompt-to-prompt and prompt-to-jql matching
+      const score = Math.max(promptScore, jqlScore) / 100; // Convert percentage to decimal
       
       return {
         ...example,
-        score: matchCount / queryWords.length
+        score
       };
     });    
+    
     return scoredExamples
       .filter(example => example.score >= 0.95)
       .sort((a, b) => b.score - a.score)
@@ -305,10 +321,10 @@ export class OpenAILLMService implements ILLMService {
     try {
       const similarJqlExamples = this.jqlStore.getSimilarExamples(userMessage, 7);
       
-      if (similarJqlExamples.length > 0) {
+      /*if (similarJqlExamples.length > 0) {
         console.info(`Found ${similarJqlExamples.length} similar JQL examples for user message: "${userMessage}"`);
         return similarJqlExamples[0].jql;
-      };
+      };*/
 
       console.info('Retrieved similar JQL examples:', similarJqlExamples);
       const fewShotExamples = similarJqlExamples.map(example => `User: ${example.prompt}\nJQL: ${example.jql}`).join('\n\n');

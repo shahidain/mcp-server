@@ -1,5 +1,15 @@
 [
   {
+    "prompt": "get all jira subtask with status 'To Do' having parent key 'SCRUM-8'",
+    "jql": "issuetype in subtaskIssueTypes() AND status = \"To Do\" AND parent = \"SCRUM-8\" ORDER BY priority DESC, created DESC",
+    "timestamp": 1750261926424
+  },
+  {
+    "prompt": "get all jira subtask with status 'To Do'",
+    "jql": "issuetype in subtaskIssueTypes() AND status = \"To Do\" ORDER BY priority DESC, created DESC",
+    "timestamp": 1750261839110
+  },
+  {
     "prompt": "fetch all jira issues of type as 'subtask' and status is closed or done",
     "jql": "issuetype in subtaskIssueTypes() AND (status = \"Done\" OR status = \"Closed\") ORDER BY priority DESC, created DESC",
     "timestamp": 1750260654915
