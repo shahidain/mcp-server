@@ -1,5 +1,10 @@
 [
   {
+    "prompt": "fetch details of all closed jira sprints and then draw a bar chart of sprint velocity. do a deep dive analysis of bar chart data. present your findings in well grouped bullet points also suggest areas of improvements",
+    "jql": "sprint in closedSprints() ORDER BY priority DESC, created DESC",
+    "timestamp": 1750249480908
+  },
+  {
     "prompt": "get details of sprint 'SCRUM Sprint 10'",
     "jql": "sprint = \"SCRUM Sprint 10\" ORDER BY priority DESC, created DESC",
     "timestamp": 1750167991901
@@ -23,11 +28,6 @@
     "prompt": "get all stories of active sprint",
     "jql": "project = SCRUM AND issuetype = Story AND sprint in openSprints() ORDER BY priority DESC, created DESC",
     "timestamp": 1749815412841
-  },
-  {
-    "prompt": "get all closed sprints and then create a velocity line chart, do a well detailed analysis",
-    "jql": "sprint in closedSprints() ORDER BY priority DESC, created DESC",
-    "timestamp": 1749655937152
   },
   {
     "prompt": "give all members present in all sprints",
