@@ -1,4 +1,3 @@
-import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
 import { Response } from 'express';
 import { SystemPromtForTool, SystemPromptForChart, SystemPromptForText, SystemPromptForJQL } from './prompts.js';
@@ -11,24 +10,17 @@ import * as path from 'path';
 dotenv.config();
 
 /**
- * Configuration constants for LLM API access
- * Supports both OPENAI_API_KEY and LLM_API_KEY for flexibility
+ * Configuration constants for Local LLM API access via Ollama
  */
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.LLM_MODEL;
+const OLLAMA_API_URL = process.env.OLLAMA_API_URL || 'http://localhost:11434/api/chat';
+const LOCAL_MODEL = process.env.LOCAL_MODEL || 'mistral';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
 // Log configuration status at startup
-if (!OPENAI_API_KEY) {
-  console.error('ERROR: OpenAI API key not found in environment variables.');
-  console.error('Please set OPENAI_API_KEY or LLM_API_KEY in your .env file.');
-  console.error('AI-powered insights will not be available until this is configured.');
-} else {
-  console.log(`LLM API initialized with model: ${MODEL}`);
-}
+console.log(`Local LLM API initialized with model: ${LOCAL_MODEL} at ${OLLAMA_API_URL}`);
 
-// JSON-based persistent storage for JQL examples
+// JSON-based persistent storage for JQL examples (same as original)
 interface JQLExample {
   prompt: string;
   jql: string;
@@ -38,6 +30,7 @@ interface JQLExample {
 class PersistentJQLStore {
   private examples: JQLExample[] = [];
   private readonly filePath: string;
+  
   constructor() {
     this.filePath = path.join(process.cwd(), 'data', 'jql-examples.json');
     this.ensureDataDirectory();
@@ -101,6 +94,7 @@ class PersistentJQLStore {
       console.error('Error saving JQL examples to file:', error);
     }
   }
+
   addExample(prompt: string, jql: string): void {
     // Check if this example already exists (by prompt similarity or exact JQL match)
     const existingExample = this.examples.find(example => {
@@ -207,54 +201,98 @@ class PersistentJQLStore {
   }
 }
 
-// Initialize the persistent JQL store
-const jqlStore = new PersistentJQLStore();
+/**
+ * Interface for Ollama chat API request
+ */
+interface OllamaMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
 
+interface OllamaChatRequest {
+  model: string;
+  messages: OllamaMessage[];
+  stream?: boolean;
+  response_format?: {
+    type: "json_object" | "text";
+  };
+  options?: {
+    temperature?: number;
+    top_p?: number;
+    max_tokens?: number;
+  };
+}
+
+interface OllamaChatResponse {
+  message: {
+    role: string;
+    content: string;
+  };
+  done: boolean;
+  total_duration?: number;
+  load_duration?: number;
+  prompt_eval_count?: number;
+  prompt_eval_duration?: number;
+  eval_count?: number;
+  eval_duration?: number;
+}
 
 /**
- * OpenAI-based LLM Service Implementation
- * Implements the ILLMService interface using OpenAI's API
+ * Ollama-based LLM Service Implementation
+ * Implements the ILLMService interface using Ollama's local API
  */
-export class OpenAILLMService implements ILLMService {
-  private openai: OpenAI;
+export class OllamaLLMService implements ILLMService {
+  private baseUrl: string;
   private model: string;
   private jqlStore: PersistentJQLStore;
 
-  constructor() {
-    this.validateApiKey();
-    this.openai = new OpenAI({ 
-      apiKey: OPENAI_API_KEY,
-      timeout: 30000,
-      maxRetries: MAX_RETRIES
-    });
-    this.model = MODEL || 'gpt-4.1-nano';
+  constructor(baseUrl?: string, model?: string) {
+    this.baseUrl = baseUrl || OLLAMA_API_URL;
+    this.model = model || LOCAL_MODEL;
     this.jqlStore = new PersistentJQLStore();
   }
 
-  private validateApiKey(): void {
-    if (!OPENAI_API_KEY) {
-      throw new Error('OpenAI API key is not configured. Please add OPENAI_API_KEY to your .env file.');
-    }
-  }
-
-  private async callWithRetry(config: any): Promise<any> {
+  private async callWithRetry(config: OllamaChatRequest): Promise<any> {
     let lastError = null;
     
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        return await this.openai.chat.completions.create(config);
+        const response = await fetch(this.baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...config,
+            stream: false
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data: OllamaChatResponse = await response.json();
+        
+        // Convert to OpenAI-like format for compatibility
+        return {
+          choices: [{
+            message: {
+              content: data.message.content
+            }
+          }]
+        };
       } catch (error) {
         lastError = error;
-        const isRateLimitError = error instanceof Error && 
-          ('message' in error) && 
-          (error.message.includes('rate_limit') || error.message.includes('429'));
         
-        if (isRateLimitError || error instanceof TypeError || error instanceof SyntaxError) {
-          console.warn(`API call attempt ${attempt + 1} failed, retrying in ${RETRY_DELAY_MS}ms...`);
+        // Retry on network errors or server errors
+        if (error instanceof TypeError || (error instanceof Error && error.message.includes('HTTP error'))) {
+          console.warn(`Local API call attempt ${attempt + 1} failed, retrying in ${RETRY_DELAY_MS}ms...`);
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
           continue;
         }
         
+        // Don't retry on other types of errors
         throw error;
       }
     }
@@ -262,34 +300,110 @@ export class OpenAILLMService implements ILLMService {
     throw lastError || new Error('Maximum retry attempts reached');
   }
 
-  private async streamWithRetry(config: any): Promise<any> {
+  private async streamWithRetry(config: OllamaChatRequest): Promise<any> {
     let lastError = null;
     
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const streamResponse = await this.openai.chat.completions.create({
-          ...config,
-          stream: true
+        const response = await fetch(this.baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...config,
+            stream: true
+          }),
         });
-        
-        return streamResponse;
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Create an async generator that yields OpenAI-like chunks
+        async function* streamGenerator() {
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error('No readable stream available');
+          }
+
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (line.trim()) {
+                  try {
+                    const data: OllamaChatResponse = JSON.parse(line);
+                    // Convert to OpenAI-like format
+                    yield {
+                      choices: [{
+                        delta: {
+                          content: data.message.content || ''
+                        }
+                      }]
+                    };
+                    
+                    if (data.done) {
+                      return;
+                    }
+                  } catch (parseError) {
+                    console.warn('Failed to parse streaming response line:', line);
+                  }
+                }
+              }
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        }
+
+        return streamGenerator();
       } catch (error) {
         lastError = error;
-        const isRateLimitError = error instanceof Error && 
-          ('message' in error) && 
-          (error.message.includes('rate_limit') || error.message.includes('429'));
         
-        if (isRateLimitError || error instanceof TypeError || error instanceof SyntaxError) {
+        // Retry on network errors or server errors
+        if (error instanceof TypeError || (error instanceof Error && error.message.includes('HTTP error'))) {
           console.warn(`Streaming API call attempt ${attempt + 1} failed, retrying in ${RETRY_DELAY_MS}ms...`);
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
           continue;
         }
         
+        // Don't retry on other types of errors
         throw error;
       }
     }
     
     throw lastError || new Error('Maximum retry attempts reached for streaming');
+  }
+
+  private async validateOllamaService(): Promise<void> {
+    try {
+      const response = await fetch(this.baseUrl.replace('/api/chat', '/api/tags'), {
+        method: 'GET',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Ollama service not available at ${this.baseUrl}`);
+      }
+    } catch (error) {
+      throw new Error(`Failed to connect to Ollama service: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private convertToOllamaMessages(messages: Array<{role: string, content: string}>): OllamaMessage[] {
+    return messages.map(msg => ({
+      role: msg.role as 'system' | 'user' | 'assistant',
+      content: msg.content
+    }));
   }
 
   private setStreamingHeaders(res: Response): void {
@@ -304,41 +418,43 @@ export class OpenAILLMService implements ILLMService {
     if (!userMessage || typeof userMessage !== 'string') {
       throw new Error('Invalid user message provided');
     }
-
+    
     try {
       const similarJqlExamples = this.jqlStore.getSimilarExamples(userMessage);
+      // If similar examples are found then return JQL query from the first example rather using Local LLM
       if (similarJqlExamples.length > 0) {
         console.info(`Found ${similarJqlExamples.length} similar JQL examples for user message: "${userMessage}"`);
         return similarJqlExamples[0].jql;
       }
-
+      
       console.info('Retrieved similar JQL examples:', similarJqlExamples);
       const fewShotExamples = similarJqlExamples.map(example => `User: ${example.prompt}\nJQL: ${example.jql}`).join('\n\n');
       const promptForJql = `${SystemPromptForJQL}Examples:\n\n${fewShotExamples}`;
       console.info('Prompt for JQL:', promptForJql);
-
-      const config = {
+        const config: OllamaChatRequest = {
         model: this.model,
-        messages: [
+        messages: this.convertToOllamaMessages([
           { role: 'system', content: promptForJql },
           { role: 'user', content: userMessage }
-        ],
-        temperature: 0,
-        response_format: { type: "text" }
+        ]),
+        response_format: { type: "text" },
+        options: {
+          temperature: 0
+        }
       };
 
       const response = await this.callWithRetry(config);
-      console.log('OpenAI API response:', response);
-
+      console.log('Local LLM API response:', response);
+      
       const content = response.choices[0]?.message?.content;
       if (!content) {
-        throw new Error('Empty response from OpenAI API');
+        throw new Error('Empty response from Local LLM API');
       }
       
       return content;
     } catch (error) {
-      console.error('Error calling OpenAI API:', error);
-      throw new Error(`Failed to process request with AI: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Error calling Local LLM API:', error);
+      throw new Error(`Failed to process request with Local AI: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -347,68 +463,81 @@ export class OpenAILLMService implements ILLMService {
   }
 
   async getToolToCall(userMessage: string): Promise<{tool: string, parameters: Record<string, any>}> {
+    // Validate input
     if (!userMessage || typeof userMessage !== 'string') {
       throw new Error('Invalid user message provided');
     }
     
-    try {
-      const config = {
+    try {      
+      const config: OllamaChatRequest = {
         model: this.model,
         messages: [
           { role: 'system', content: SystemPromtForTool },
           { role: 'user', content: userMessage }
         ],
-        temperature: 0,
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        options: {
+          temperature: 0
+        }
       };
 
       const response = await this.callWithRetry(config);
-      console.log('OpenAI API response:', response);
 
+      // Parse and validate the response      console.log('Local LLM API response:', JSON.stringify(response, null, 2));
       const content = response.choices[0]?.message?.content;
+      console.log('Local LLM API tool response:', content);
       if (!content) {
-        throw new Error('Empty response from OpenAI API');
+        throw new Error('Empty response from Local LLM API');
       }
       
       try {
+        // Try direct JSON parsing first (like OpenAI implementation)
         const parsedContent = JSON.parse(content);
         return parsedContent;
       } catch (parseError) {
-        throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+        // Fallback: Extract JSON from response if it's wrapped in markdown code blocks
+        try {
+          const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+          const jsonString = jsonMatch ? jsonMatch[1] : content;
+          const parsedContent = JSON.parse(jsonString);
+          return parsedContent;
+        } catch (secondParseError) {
+          console.error('Failed to parse response after trying both methods:', content);
+          const jsonObject = {
+            tool: null,
+            parameters: {
+              id: 0,
+              query: null,
+              limit: 0,
+              skip: 0
+            },
+            requested_format: "markdown-text",
+            response_text: content
+          };
+          return JSON.parse(JSON.stringify(jsonObject)); // Ensure we return a valid JSON object
+        }
       }
     } catch (error) {
-      console.error('Error calling OpenAI API:', error);
-      throw new Error(`Failed to process request with AI: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Error calling Local LLM API:', error);
+      throw new Error(`Failed to process request with Local AI: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
-
   async getMarkdownTableFromJson(inputJson: string, userPrompt: string, systemPrompt: string): Promise<string> {
-    const config = {
+    const config: OllamaChatRequest = {
       model: this.model,
-      messages: [
-        { 
-          role: 'system', 
-          content: [{"type": "input_text", "text": systemPrompt}] },
-        { 
-            role: 'user', content: [
-            {"type": "input_text", "text": inputJson}, 
-            {"type": "input_text", "text": userPrompt}
-          ] 
-        }
-      ],
-      text: {
-        "format": {
-          "type": "text"
-        }
-      },
-      reasoning: {},
-      tools: [],
-      temperature: 0
+      messages: this.convertToOllamaMessages([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `${inputJson}\n\n${userPrompt}` }
+      ]),
+      response_format: { type: "text" },
+      options: {
+        temperature: 0
+      }
     };
 
     const response = await this.callWithRetry(config);
     const content = response.choices[0]?.message?.content;
-    console.log('OpenAI API data format response:', JSON.stringify(response, null, 2));
+    console.log('Local LLM API data format response:', JSON.stringify(response, null, 2));
     return content;
   }
 
@@ -442,19 +571,18 @@ export class OpenAILLMService implements ILLMService {
 
   async streamMarkdownTextFromJson(inputJson: string, userPrompt: string, res: Response): Promise<void> {
     try {
-      if (!this.model) {
-        throw new Error('OpenAI model is not configured');
-      }
-      
-      const config = {
-        model: this.model as string,
-        messages: [
+      await this.validateOllamaService();
+        const config: OllamaChatRequest = {
+        model: this.model,
+        messages: this.convertToOllamaMessages([
           { role: 'system', content: SystemPromptForText },
           { role: 'user', content: inputJson },
           { role: 'user', content: userPrompt }
-        ],
-        temperature: 0,
-        stream: true
+        ]),
+        response_format: { type: "text" },
+        options: {
+          temperature: 0
+        }
       };
       
       this.setStreamingHeaders(res);
@@ -497,27 +625,28 @@ export class OpenAILLMService implements ILLMService {
     additionalMessage?: string
   ): Promise<void> {
     try {
-      if (!this.model) {
-        throw new Error('OpenAI model is not configured');
-      }
-
-      const config = {
-        model: this.model as string,
-        messages: [
+      await this.validateOllamaService();      const config: OllamaChatRequest = {
+        model: this.model,
+        messages: this.convertToOllamaMessages([
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `${inputJson}\n\n${userPrompt}` }
-        ],
-        temperature: 0,
-        stream: true
+        ]),
+        response_format: { type: "text" },
+        options: {
+          temperature: 0
+        }
       };
 
       console.log('LLM returned data format:', dataFormat);
       if (dataFormat !== DataFormat.MarkdownTable && dataFormat !== DataFormat.MarkdownText) { 
-        config.messages[0] = {role: 'system', content: SystemPromptForChart};
-        config.stream = false;
+        config.messages[0] = {
+          role: 'system',
+          content: SystemPromptForChart
+        };
+        
         const response = await this.callWithRetry(config);
         const content = response.choices[0]?.message?.content;
-        console.log('OpenAI API chart format response:', content);
+        console.log('Local LLM API chart format response:', content);
         res.status(200).send(content);
         res.end();
         return;
@@ -530,6 +659,7 @@ export class OpenAILLMService implements ILLMService {
       let responseText = additionalMessage || '';
       if (responseText)
         res.write(responseText);
+        
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content || '';
         if (content) {
@@ -539,6 +669,7 @@ export class OpenAILLMService implements ILLMService {
       
       res.end();
       console.log('Streaming response completed');
+      
       res.on('close', () => {
         console.log('Client closed connection during streaming');
         res.end();
@@ -555,30 +686,30 @@ export class OpenAILLMService implements ILLMService {
 }
 
 // Create default instance and export individual functions for backward compatibility
-const defaultOpenAIService = new OpenAILLMService();
+const defaultOllamaService = new OllamaLLMService();
 
 export async function getJQL(userMessage: string): Promise<string> {
-  return defaultOpenAIService.getJQL(userMessage);
+  return defaultOllamaService.getJQL(userMessage);
 }
 
 export async function saveExample(prompt: string, jql: string): Promise<void> {
-  return defaultOpenAIService.saveExample(prompt, jql);
+  return defaultOllamaService.saveExample(prompt, jql);
 }
 
 export async function getToolToCall(userMessage: string): Promise<{tool: string, parameters: Record<string, any>}> {
-  return defaultOpenAIService.getToolToCall(userMessage);
+  return defaultOllamaService.getToolToCall(userMessage);
 }
 
 export async function getMarkdownTableFromJson(inputJson: string, userPrompt: string, systemPrompt: string): Promise<string> {
-  return defaultOpenAIService.getMarkdownTableFromJson(inputJson, userPrompt, systemPrompt);
+  return defaultOllamaService.getMarkdownTableFromJson(inputJson, userPrompt, systemPrompt);
 }
 
 export async function streamResponseText(responseText: string, res: Response): Promise<void> {
-  return defaultOpenAIService.streamResponseText(responseText, res);
+  return defaultOllamaService.streamResponseText(responseText, res);
 }
 
 export async function streamMarkdownTextFromJson(inputJson: string, userPrompt: string, res: Response): Promise<void> {
-  return defaultOpenAIService.streamMarkdownTextFromJson(inputJson, userPrompt, res);
+  return defaultOllamaService.streamMarkdownTextFromJson(inputJson, userPrompt, res);
 }
 
 export async function streamMarkdownTableFromJson(
@@ -589,5 +720,5 @@ export async function streamMarkdownTableFromJson(
   dataFormat: DataFormat,
   additionalMessage?: string
 ): Promise<void> {
-  return defaultOpenAIService.streamMarkdownTableFromJson(inputJson, userPrompt, systemPrompt, res, dataFormat, additionalMessage);
+  return defaultOllamaService.streamMarkdownTableFromJson(inputJson, userPrompt, systemPrompt, res, dataFormat, additionalMessage);
 }

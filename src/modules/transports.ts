@@ -1,7 +1,8 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { Request, Response } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getToolToCall, streamMarkdownTableFromJson, streamResponseText, streamMarkdownTextFromJson, getJQL, saveExample } from "../llm-api/llmTools.js";
+import { getLLMService, switchLLMProvider } from "../llm-api/LLMServiceFactory.js";
+import { LLMProvider } from "../llm-api/ILLMService.js";
 import { SqlVendorService } from "../services/sqlVendorService.js";
 import { SqlUserService } from '../services/sqlUserService.js';
 import { SqlCommodityService } from "../services/sqlCommodityService.js";
@@ -19,6 +20,9 @@ const roleService = new SqlRoleService();
 import { DataFormat, GetJiraIssueSearchResponse } from "../utils/utilities.js";
 import { JiraIssue, JiraIssueSearchResponse } from "../models/jira.js";
 import { getApplication } from "../app-data/applications.js";
+
+// Initialize LLM service based on environment configuration
+const llmService = getLLMService();
 
 export function setupSSEEndpoint(app: any, server: McpServer) {
   // Create an initial response endpoint that returns JSON right away with session ID
@@ -95,7 +99,7 @@ export function setupMessageEndpoint(app: any) {
             res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-            const llmApiResponse: any = await getToolToCall(req.body.message);
+            const llmApiResponse: any = await llmService.getToolToCall(req.body.message);
             console.log('LLM API Response Message:', llmApiResponse);
             const toolName = llmApiResponse?.tool;
             console.log(`Tool to call with format: ${toolName} - ${JSON.stringify(llmApiResponse)}`);
@@ -113,79 +117,76 @@ export function setupMessageEndpoint(app: any) {
             const appName = llmApiResponse?.parameters?.appName;
             const env = llmApiResponse?.parameters?.env;
             
-            switch (toolName) {
-              case "get-commodities":
+            switch (toolName) {              case "get-commodities":
                 const commodities = await commoditiesService.getPaginatedCommodities();
-                return streamMarkdownTableFromJson(JSON.stringify(commodities), req.body.message, SystemPromptForArray, res, format);
-                
-              case "get-commodity-by-id":
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(commodities), req.body.message, SystemPromptForArray, res, format);
+                  case "get-commodity-by-id":
                 const commoditiy = await commoditiesService.getCommodityById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(commoditiy), req.body.message, SystemPromptForObject, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(commoditiy), req.body.message, SystemPromptForObject, res, format);
 
               case "search-commodities":
                 const searchCommodity = await commoditiesService.searchCommodities(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchCommodity), req.body.message,SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(searchCommodity), req.body.message,SystemPromptForArray, res, format);
 
               case "get-roles":
                 const roles = await roleService.getPaginatedRoles(skip, limit);
-                return streamMarkdownTableFromJson(JSON.stringify(roles), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(roles), req.body.message, SystemPromptForArray, res, format);
 
               case "get-role-by-id":
                 const role = await roleService.getRoleById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(role), req.body.message, SystemPromptForObject, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(role), req.body.message, SystemPromptForObject, res, format);
 
               case "search-roles":
                 const searchRoles = await roleService.searchRoles(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchRoles), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(searchRoles), req.body.message, SystemPromptForArray, res, format);
 
               case "get-users":
                 const users = await userService.getPaginatedUsers(skip, limit);
-                return streamMarkdownTableFromJson(JSON.stringify(users), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(users), req.body.message, SystemPromptForArray, res, format);
 
               case "get-user-by-id":
                 const user = await userService.getUserById(id);
-                return streamMarkdownTableFromJson(JSON.stringify(user), req.body.message, SystemPromptForObject, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(user), req.body.message, SystemPromptForObject, res, format);
 
               case "search-users":
                 const searchUsers = await userService.searchUsers(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchUsers), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(searchUsers), req.body.message, SystemPromptForArray, res, format);
 
               case "get-vendors":
                 const vendors = await vendorService.getPaginatedVendors(skip, limit);
-                return streamMarkdownTableFromJson(JSON.stringify(vendors), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(vendors), req.body.message, SystemPromptForArray, res, format);
 
               case "get-vendor-by-id":
                 const vendor = await vendorService.getVendorById(id);
-                return streamMarkdownTextFromJson(JSON.stringify(vendor), req.body.message, res);
+                return llmService.streamMarkdownTextFromJson(JSON.stringify(vendor), req.body.message, res);
 
               case "search-vendors":
                 const searchVendors = await vendorService.searchVendors(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(searchVendors), req.body.message, SystemPromptForArray, res, format);
 
               case "get-products":
                 const products = await ProductService.getProducts(limit, skip);
-                return streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(products), req.body.message, SystemPromptForArray, res, format);
 
               case "get-product-by-id":
                 const product = await ProductService.getProductById(id);
-                return streamMarkdownTextFromJson(JSON.stringify(product), req.body.message, res);
+                return llmService.streamMarkdownTextFromJson(JSON.stringify(product), req.body.message, res);
 
               case "search-products":
                 const searchProducts = await ProductService.searchProducts(searchQuery);
-                return streamMarkdownTableFromJson(JSON.stringify(searchProducts?.products), req.body.message, SystemPromptForArray, res, format);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(searchProducts?.products), req.body.message, SystemPromptForArray, res, format);
               
               case "get-jira-issue-by-id":
                 const jiraIssue = await JiraService.getIssueById(id);
-                return streamMarkdownTextFromJson(JSON.stringify(jiraIssue), req.body.message, res);
-              
-              case "search-jira-issues":
-                const jqlQuey = await getJQL(req.body.message);
+                return llmService.streamMarkdownTextFromJson(JSON.stringify(jiraIssue), req.body.message, res);
+                case "search-jira-issues":
+                const jqlQuey = await llmService.getJQL(req.body.message);
                 console.log(`JQL Query: ${jqlQuey}`);
                 const jiraIssues = await JiraService.searchIssues(jqlQuey);
                 const jiraIssueSearchResponse: JiraIssueSearchResponse[] = GetJiraIssueSearchResponse(jiraIssues);
                 const additionalMessage = `Here is the JIRA search result for your message, which I got by executing below JQL \n\n**${jqlQuey}**\n\n`;
-                saveExample(req.body.message, jqlQuey);
-                return streamMarkdownTableFromJson(JSON.stringify(jiraIssueSearchResponse), req.body.message, SystemPromptForJqlResponse, res, format, additionalMessage);
+                await llmService.saveExample(req.body.message, jqlQuey);
+                return llmService.streamMarkdownTableFromJson(JSON.stringify(jiraIssueSearchResponse), req.body.message, SystemPromptForJqlResponse, res, format, additionalMessage);
 
               case "create-jira-issue":
                 const createdJiraIssue: JiraIssue | undefined = await JiraService.createIssue(project, summary, issuetype, description);
@@ -196,17 +197,16 @@ export function setupMessageEndpoint(app: any) {
                 const createdSubtask: JiraIssue | undefined = await JiraService.createSubTask(project, parentId, summary, description);
                 return res.status(200).type('text/plain').send(
                   `Created JIRA subtask with key: **${createdSubtask?.key}** under parent issue: **${parentId}**`);
-              
-              case "get-application-status":
+                case "get-application-status":
                 const application = await getApplication(appName, env);
                 if (!application) {
                   return res.status(200).send(`Application ${appName} not found in environment ${env}`);
                 }
-                return streamMarkdownTextFromJson(JSON.stringify(application), req.body.message, res);
+                return llmService.streamMarkdownTextFromJson(JSON.stringify(application), req.body.message, res);
             }
             
             if (llmApiResponse?.response_text) {
-              return streamResponseText(llmApiResponse.response_text, res);
+              return llmService.streamResponseText(llmApiResponse.response_text, res);
             }
             res.setHeader('Content-Type', 'text/plain');
             return res.status(200).send(llmApiResponse?.response_text);
@@ -231,7 +231,8 @@ export function setupMessageEndpoint(app: any) {
 
 async function handleError(error: any, res: Response) {
   const errorMessage = error.message || "An unexpected error occurred while processing the message";
-  streamMarkdownTextFromJson(JSON.stringify({error: errorMessage}), "I received error while processing user message, give a detailed possible reason of this error and suggest how this can be fixed", res);
+  const llmService = getLLMService();
+  llmService.streamMarkdownTextFromJson(JSON.stringify({error: errorMessage}), "I received error while processing user message, give a detailed possible reason of this error and suggest how this can be fixed", res);
 }
 
 async function sendMessages(transport: SSEServerTransport) {

@@ -55,7 +55,7 @@ export const SystemPromtForTool: string = `
   create-jira-subtask(project: string, parentId: string, summary: string, description?: string)
   get-application-status(appName: string, env: string) keys are boss-service, transformation-service, dreams-api and env can be dev, prod or test
 
-  based on the user message, return JSON with the most appropriate tool name and parameters with requested format. If no tool is applicable, return below object and give your response text in 'response_text' otherwise keep 'response_text' as null.
+  based on the user message, return example JSON object with the most appropriate tool name and parameters with requested format. If no tool is applicable, give your response text in 'response_text' property otherwise keep 'response_text' as null.
 
   default JIRA project is ${process.env.DEFAULT_PROJECT_KEY}
   
@@ -69,8 +69,10 @@ export const SystemPromtForTool: string = `
       "skip": number
     },
     "requested_format": "markdown-table|markdown-text|pie|bar|line|scatter",
-    "response_text": string | null
+    "response_text": string
   }
+
+  your outpout should match the above format and strictly a valid JSON only, no extra text, no explanation, no markdown, no code blocks etc.
 `
 
 export const SystemPromptForChart: string = `You are a data converter expert that transforms JSON data into chart configurations. You MUST return only valid JSON in the specified format.

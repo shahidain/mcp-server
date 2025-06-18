@@ -8,8 +8,8 @@ export class SqlVendorService {
             const pool = await getPool();
             const request = new sql.Request(pool);
             
-            request.input('skip', sql.Int, skip);
-            request.input('limit', sql.Int, limit);
+            request.input('skip', sql.Int, skip == null ? 0 : skip);
+            request.input('limit', sql.Int, limit == null ? 10 : limit);
 
             const result = await request.query(
                 `SELECT * FROM Vendors WHERE (Deleted IS NULL OR Deleted = 0) ORDER BY Id OFFSET @skip ROWS FETCH NEXT @limit ROWS ONLY`
